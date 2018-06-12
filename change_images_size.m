@@ -1,5 +1,6 @@
 clc
 clear all
+% navigate to the folder
 folder = uigetdir;
 height = 224;
 width = 224;

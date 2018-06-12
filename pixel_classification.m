@@ -11,15 +11,19 @@ sliding=1;
 height=460;
 width=550;
 channels=3;
-load ('googlenet_multi_scales_patches.mat')
-net = googlenetUS;
-net_infor=' googlenet';
+model_folder= '../trained models';
+addpath(model_folder);
+model_file=fullfile(model_folder,'resnet_multi_scales_patches.mat');
+load (model_file)
+net = resnetUS;
+net_infor=' resnet';
 test_imgs_path = 'C:\Users\NeuroBeast\Desktop\images_high_resolution\Testing\US';
 % testing US images indexes:
+results={};
 indexes = {'001';'204';'209';'211'};
-result_storing_path='C:\Users\NeuroBeast\Desktop\segmentation';
+result_storing_path='C:\Users\NeuroBeast\Desktop\segmentation\pixel classification';
 for i=2:length(indexes)
-
+%i=1;
     label_pixel_classification=ones(height,width);
     label_pixel_classification=label_pixel_classification*3;
     index=indexes{i};
@@ -36,9 +40,8 @@ tic
     result = ones(height,width,channels);
     x_steps = floor((width-patch_size)/sliding);
     y_steps = floor((height-patch_size)/sliding);
-    for j =0:x_steps
-        disp('processing...')
-        for k = 0:y_steps
+    for j =0:1:x_steps
+        for k = 0:1:y_steps
             patch = imcrop(test_file,[j*sliding k*sliding patch_size patch_size]);
             rec = rectangle('Position',[j*sliding k*sliding patch_size patch_size],'EdgeColor','b','LineWidth',2);
             patch=imresize(patch,[224 224]);
@@ -69,28 +72,31 @@ tic
             %left_corner_y=left_corner_y+sliding;
         end
         %left_corner_x=left_corner_x+sliding;
+        fprintf('Current image index is: %d',i);
+        fprintf('\n\n');
         fprintf('Current x step is: %d',j);
+        fprintf('\n\n');
+        fprintf('Current y step is: %d',k);
+        fprintf('\n\n');
     end
-    %results{end+1}=result;
-%end
-toc
+    results{end+1}=result;
 end
-
+toc
+%end
 % parameters 
-
 %results = {};
 % main programme:
-
-
-%for l=1:length(results)
+for l=1:length(results)
+    index=indexes{l};
+    test_name3=strcat('case1_video10',index);
+    result_temp=results{l};
     figure
-    imshow(result)
-
-    result_average_name=strcat(test_name2,net_infor,' pixel classification.jpg');
+    imshow(result_temp)
+    result_average_name=strcat(test_name3,net_infor,' pixel classification.jpg');
     store_file=fullfile(result_storing_path,result_average_name);
     result_average_name=char(result_average_name);
-    imwrite(result,store_file);
-%end
-label_file_name=strcat(test_name2,net_infor,'pixel classfication.mat');
-store_classified_labels=fullfile(result_storing_path,label_file_name);
-save(store_classified_labels,'label_pixel_classification')
+    imwrite(result_temp,store_file);
+end
+%label_file_name=strcat(test_name2,net_infor,'pixel classfication.mat');
+%store_classified_labels=fullfile(result_storing_path,label_file_name);
+%save(store_classified_labels,'label_pixel_classification')

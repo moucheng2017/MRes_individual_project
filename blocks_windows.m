@@ -2,54 +2,53 @@
 % with distinct blocks
 clc
 clear all
-% load right model:
-load ('googlenet_multi_scales_patches.mat')
+%% load right model:
+model_folder= '../trained models';
+addpath(model_folder);
+%% change parameters:
+% choose fine tuned neural model:
+model_name = 'Googlenet_case1video4_high_entropy_balanced.mat';
+model_file=fullfile(model_folder,model_name);
+load (model_file);
 neural_net = googlenetUS;
-net_infor = ' googlenet';
-overlapping=5;
-% block windows on single image:
-%file = 'test1.jpeg';
-%path = 'C:\Users\NeuroBeast\Desktop\images_high_resolution\Training\Test';
-%file_fullname = fullfile(path,file);
-%img=imread(file_fullname);
-% block windows on all testing images:
+% change the fine tuned neural model name:
+[path,model_info,ext]=fileparts(model_name);
+%net_infor = strcat(net_type,'_',classes,'classes','_trained on',training_dataset,'_',training_patches_size,'_with_',training_patches_sliding,'sliding');
+% change the overlapping pixels of neighbouring patches:
 size_range_low=20;
-size_range_high=40;
+size_range_low_str=num2str(size_range_low);
+size_range_high=30;
+size_range_high_str=num2str(size_range_high);
 size_intermidiate=1;
-test_imgs_path = uigetdir;
+%test_imgs_path = uigetdir;
+test_imgs_path='C:\Users\NeuroBeast\Desktop\images_high_resolution\Testing\US';
+addpath(test_imgs_path);
+% choose testing images to be tested according to their indexes:
+%indexes = {'001';'204';'209';'211'};%case1video1
+indexes={'1183';'0313';'0976';'1041'};%case1video4
+%% Main programme:
 % testing US images indexes:
-classiy_fun = @(block) classify_US(block,neural_net); 
-indexes = {'001';'204';'209';'211'};
-result_storing_path='C:\Users\NeuroBeast\Desktop\segmentation';
+classiy_fun = @(block) classify_US(block,neural_net);%3 classes
+%classiy_fun = @(block) classify_US_5classes(block,neural_net); % 5 classes
+result_storing_path='C:\Users\NeuroBeast\Desktop\results';
 for i=1:length(indexes)
     classified={};
-    result=zeros(460,555,3);
-    height=460;
-    width=550;
     index=indexes{i};
-    %test_name1=strcat('case1_Coronal+00',index,'-000.jpg'); 
-    %test_name2=strcat('case1_Coronal+00',index); 
-    test_name1=strcat('case1_video10',index,'.jpeg'); 
-    test_name2=strcat('case1_video10',index); 
+    test_name1=strcat('case1_Coronal+00',index,'-000.jpg'); 
+    test_name2=strcat('case1_Coronal+00',index); 
+    %test_name1=strcat('case1_video10',index,'.jpeg'); 
+    %test_name2=strcat('case1_video10',index); 
     test_fullname = fullfile(test_imgs_path,test_name1);
     test_file=imread(test_fullname);
-    test_file=imresize(test_file,[460 555]);
+    [height,width,dim]=size(test_file);
+    result=zeros(height,width,dim);
+    test_file=imresize(test_file,[height width]);
     for s=size_range_low:size_intermidiate:size_range_high
-        %s_block=floor(s/2);
-        
-        m=floor(height/s);
-        n=floor(width/s);
-       classified_US=blockproc(test_file,[m n],classiy_fun);%no overlapping
-        %classified_US = blockproc(test_file,[m n],classiy_fun,'BorderSize',[overlapping overlapping],'PadPartialBlocks',false,'TrimBorder',true);
+        classified_US=blockproc(test_file,[s s],classiy_fun);
+        %classified_US = blockproc(test_file,[s s],classiy_fun,'BorderSize',[5 5],'PadPartialBlocks',false,'TrimBorder',true);
         %figure
         %imshow(classified_US);
-        block_infor = sprintf(' block size %d',s);
-        title_name=strcat(test_name2,block_infor,net_infor,'.jpg');
-        %title_name=strcat(title_name,block_infor);
-        %title_name=strcat(title_name,net_infor);
-        %title(title_name)
-        
-        if s == 20
+        if s == size_range_low
         [processed_height,processed_width,dim]=size(classified_US);
         processed=zeros(processed_height,processed_width,dim);
         processed=processed+classified_US;
@@ -64,7 +63,7 @@ for i=1:length(indexes)
         %imwrite(classified_US,store_file);
         fprintf('Current image index is: %d',i);
         fprintf('\n');
-        fprintf('Current box size is: %d',s);
+        fprintf('Current box number is: %d',s);
         fprintf('\n');
     end
     result_average=processed/length(classified);
@@ -80,13 +79,12 @@ for i=1:length(indexes)
     imwrite(result,store_file_result_sum);
     %}
     % change here:
-    result_average_name=strcat(test_name2,net_infor,' average 20-40 no overlapping.jpg');
-    store_file_average_sum=fullfile(result_storing_path,result_average_name);
-    result_average_name=char(result_average_name);
+    block_infor = sprintf('_block size %d',s);
+    result_average_name=strcat(test_name2,'_',model_info,'_average_between_',size_range_low_str,'_',size_range_high_str,'.jpg');  
+    store_file_average_sum=fullfile(result_storing_path,result_average_name); 
     imwrite(result_average,store_file_average_sum);
     figure
-    imshow(result_average)
-    
+    imshow(result_average)    
 end
 
 disp('End')

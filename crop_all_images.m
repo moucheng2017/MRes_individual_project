@@ -7,11 +7,12 @@ path = folder;
 addpath(path);
 m_files = dir(fullfile(folder,'*.jpg')); 
 m_files = {m_files.name};
+overlapping=20;
 %%
 for i = 1:length(m_files)
     file_temp = imread(m_files{i});
     [height,width,channels]=size(file_temp);
-    new_file = imcrop(file_temp,[5 5 width-10 height-10]);
+    new_file = imcrop(file_temp,[overlapping overlapping width-2*overlapping height-2*overlapping]);
     fullname = fullfile(path,m_files{i});
     imwrite(new_file,fullname);
 end

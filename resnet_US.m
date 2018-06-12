@@ -3,7 +3,7 @@ clc
 clear all
 training_folder = uigetdir;
 training_data_total = imageDatastore(training_folder,'IncludeSubfolders',true,'LabelSource','foldernames');
-[train,test,validate] = splitEachLabel(training_data_total,1800,200,90,'randomized');
+[train,validate] = splitEachLabel(training_data_total,4168,'randomized');
 %%
 net = resnet101;
 lgraph = layerGraph(net);
@@ -11,14 +11,18 @@ lgraph = layerGraph(net);
 figure('Units','normalized','Position',[0.1 0.1 0.8 0.8]);
 plot(lgraph)
 %}
-net.Layers(1)
-lgraph = removeLayers(lgraph, {'fc1000','prob','ClassificationLayer_predictions'});
+lgraph = removeLayers(lgraph, {'prob','ClassificationLayer_predictions'});
 newLayers = [
-    fullyConnectedLayer(3,'Name','new_fc1000','WeightLearnRateFactor',10,'BiasLearnRateFactor',10)
+    dropoutLayer(0.5,'Name','dropoutlayer_new1')
+    fullyConnectedLayer(1000,'Name','new_fc1000')
+    dropoutLayer(0.5,'Name','dropoutlayer_new2')
+    fullyConnectedLayer(100,'Name','new_fc100')
+    dropoutLayer(0.5,'Name','dropoutlayer_new3')
+    fullyConnectedLayer(3,'Name','fc_new','WeightLearnRateFactor',10,'BiasLearnRateFactor',10)
     softmaxLayer('Name','softmax')
     classificationLayer('Name','classoutput')];
 lgraph = addLayers(lgraph,newLayers);
-lgraph = connectLayers(lgraph,'pool5','new_fc1000');
+lgraph = connectLayers(lgraph,'fc1000','dropoutlayer_new1');
 %figure('Units','normalized','Position',[0.3 0.3 0.4 0.4]);
 %plot(lgraph)
 %ylim([0,10])
@@ -29,14 +33,15 @@ connections = lgraph.Connections;
 layers(1:333) = freezeWeights(layers(1:333));% up to res5b layer, except for last res modules
 lgraph = createLgraphUsingConnections(layers,connections);
 %% data augmentation
-pixelRange = [-30 30];
+%{
+pixelRange = [-20 20];
 imageAugmenter = imageDataAugmenter( ...
     'RandXReflection',true, ...
     'RandXTranslation',pixelRange, ...
     'RandYTranslation',pixelRange);
 augimdsTrain = augmentedImageDatastore([224 224],train, ...
     'DataAugmentation',imageAugmenter);
-
+%}
 %%
 %{
 opts = trainingOptions('sgdm', ...
@@ -51,6 +56,7 @@ opts = trainingOptions('sgdm', ...
     'ExecutionEnvironment','multi-gpu',...
     'Plots','training-progress');
 %}
+%{
 opts = trainingOptions('sgdm', ...
     'InitialLearnRate',0.0001, ...
     'MaxEpochs',2000,...
@@ -63,6 +69,20 @@ opts = trainingOptions('sgdm', ...
     'LearnRateDropPeriod',500,...
     'ExecutionEnvironment','multi-gpu',...
     'Plots','training-progress');
-[resnetUS,info] = trainNetwork(augimdsTrain, lgraph, opts);
-save ('resnet_multi_scales_patches_data_augmentation_AllWeightsNotFrozen.mat','resnetUS')
+%}
+opts = trainingOptions('adam', ...
+    'InitialLearnRate',0.001, ...
+    'MaxEpochs',200,...
+    'MiniBatchSize',256,...
+    'Verbose',true,...
+    'GradientDecayFactor',0.9,...
+    'SquaredGradientDecayFactor',0.999,...
+    'Epsilon',0.01,...
+    'ExecutionEnvironment','multi-gpu',...
+    'Plots','training-progress');
+[resnetUS,info] = trainNetwork(train, lgraph, opts);
+model_name='resnet_case1_20_80_50%sliding_high_intensity_more_dropout.mat';
+model_folder= '../trained models/11062018';
+model=fullfile(model_folder,model_name);
+save (model,'resnetUS')
 
