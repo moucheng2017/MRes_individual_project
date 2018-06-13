@@ -11,7 +11,13 @@ for j=1:length(cases)
     folder_temp=strcat(folder,'\',case_temp);
     addpath(folder_temp);
     files_to_be_deleted = fullfile(folder_temp,'\*.jpg');
+    for k=1:length(files_to_be_deleted)
+        file_temp=files_to_be_deleted{k};
+        img_temp=imread(file_temp);
+        %...
+    end
     delete (files_to_be_deleted);
+    fprintf('deleting...');
     fprintf('\n\n');
 end
 %{
