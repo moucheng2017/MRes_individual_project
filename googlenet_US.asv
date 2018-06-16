@@ -3,7 +3,7 @@ clc
 clear all
 training_folder = uigetdir;
 training_data_total = imageDatastore(training_folder,'IncludeSubfolders',true,'LabelSource','foldernames');
-[train,validate] = splitEachLabel(training_data_total,30000,'randomized');
+[train,validate] = splitEachLabel(training_data_total,26369,15000,'randomized');
 %% 
 inputlayer=imageInputLayer([224 224 3],'Name','inputlayer','Normalization','none');
 %lgraph1=layerGraph(inputlayer);
@@ -73,9 +73,64 @@ opts = trainingOptions('adam', ...
     'ExecutionEnvironment','multi-gpu',...
     'Plots','training-progress');
 
+[googlenetUS1,info] = trainNetwork(train, lgraph, opts);
+%[googlenetUS,info] = trainNetwork(augimdsTrain, net, opts);% keep training the old model
+model_name1='Googlenet_case1_non_DataZeroCentering_20000TrainingSamples.mat';
+model_folder= '../trained models/14062018';
+model1=fullfile(model_folder,model_name1);
+save (model,'googlenetUS1','info')
+%% 
+[train,validate] = splitEachLabel(training_data_total,36369,'randomized');
+%% 
+inputlayer2=imageInputLayer([224 224 3],'Name','inputlayer','Normalization','none');
+%lgraph1=layerGraph(inputlayer);
+net2 = googlenet;
+%layers=net.Layers;
+%layers(1)=inputlayer;
+lgraph2 = layerGraph(net2);%figure('Units','normalized','Position',[0.1 0.1 0.8 0.8]);plot(lgraph);
+lgraph2=replaceLayer(lgraph2,'data',inputlayer2);
+%lgraph = addLayers(lgraph,inputlayer);
+%lgraph = connectLayers(lgraph,'inputlayer','conv1-7x7_s2');
+lgraph2 = removeLayers(lgraph2, {'prob','output'});
+%new_lgraph = addLayers(lgraph1,lgraph);
+%plot(new_lgraph)
+Layers2 = [
+    fullyConnectedLayer(1000,'Name','fc_new1')
+    dropoutLayer(0.5,'Name','dropoutlayer_new1')
+    fullyConnectedLayer(3,'Name','fc','WeightLearnRateFactor',10,'BiasLearnRateFactor',10)
+    softmaxLayer('Name','softmax')
+    classificationLayer('Name','classoutput')];
+lgraph2 = addLayers(lgraph2,Layers2);
+lgraph2 = connectLayers(lgraph2,'loss3-classifier','fc_new1');
+%figure('Units','normalized','Position',[0.3 0.3 0.4 0.4]);
+%plot(lgraph)
+%ylim([0,10])
+%% freeze layers
+layers2 = lgraph2.Layers;
+connections2 = lgraph2.Connections;
+%layers(1:110) = freezeWeights(layers(1:110));
+layers(1:96) = freezeWeights(layers(1:96));
+lgraph = createLgraphUsingConnections(layers,connections);
+
+
+%%
+opts = trainingOptions('adam', ...
+    'InitialLearnRate',0.001, ...
+    'MaxEpochs',150,...
+    'MiniBatchSize',512,...
+    'Verbose',true,...
+    'GradientDecayFactor',0.9,...
+    'SquaredGradientDecayFactor',0.999,...
+    'Epsilon',0.01,...
+    'ValidationData',validate,...
+    'ValidationFrequency',30,...
+    'ValidationPatience',20,...
+    'ExecutionEnvironment','multi-gpu',...
+    'Plots','training-progress');
+
 [googlenetUS,info] = trainNetwork(train, lgraph, opts);
 %[googlenetUS,info] = trainNetwork(augimdsTrain, net, opts);% keep training the old model
-model_name='Googlenet_case1_non_DataZeroCentering_30000TrainingSamples.mat';
+model_name='Googlenet_case1_non_DataZeroCentering_20000TrainingSamples.mat';
 model_folder= '../trained models/14062018';
-model1=fullfile(model_folder,model_name);
-save (model,'googlenetUS','info')
+model=fullfile(model_folder,model_name);
+save (model,'googlenetUS')
