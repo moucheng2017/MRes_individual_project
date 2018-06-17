@@ -6,14 +6,14 @@ clear all
 training_path = 'C:\Users\NeuroBeast\Desktop\images_high_resolution\Training';
 effective_area=1;
 % change here:
-target_folder = 'case1video4 new';
+target_folder = 'case1video4 raw';
 %sliding_percentage=0.5;
 training_size_x=224;
 training_size_y=224;
 %mean_threshold =20;
 % for reading files:
-indexes = {'0000';'0006';'0027';'0203';'0210'};%case1video1
-%indexes = {'0158';'0429';'0856';'1226';'0340';'0505'};%case1video4
+%indexes = {'0000';'0006';'0027';'0203';'0210'};%case1video1
+indexes = {'0158';'0429';'0856';'1226';'0340';'0505'};%case1video4
 %cases = {'White matter';'Grey matter';'Tumour';'Others'};
 cases={'Tumour';'Healthy';'Others'};
 %down_line_los=strfind(target_folder,'_');
@@ -22,8 +22,8 @@ cases={'Tumour';'Healthy';'Others'};
 patch_scale = 'square';%rectangle_x: rectangle along x direction;
 %% main programme
 %for s=27:27
-for s = 10:10
-%for s = 20:5:40
+%for s = 10:10
+for s = 20:5:40
 switch patch_scale
     case 'rectanglex'
         %patch_x_size = 3*s;% for s=10:5:20
@@ -52,9 +52,9 @@ switch patch_scale
     case 'square'
         patch_x_size = s;
         patch_y_size = s;
-        if (s < 30)
-            sliding_x = 10;%patch_x_size*0.5;
-            sliding_y = 10;%patch_y_size*0.5;
+        if (s <= 30)
+            sliding_x = 5;%patch_x_size*0.5;
+            sliding_y = 5;%patch_y_size*0.5;
         else
             sliding_x = 10;%patch_x_size*0.5;
             sliding_y = 10;%patch_y_size*0.5;
@@ -102,7 +102,7 @@ processed_truth_whitematter=ones(height,width,dim);
 processed_truth_t=ones(height,width,dim);
 processed_truth_o=ones(height,width,dim);
 processed_truth_h=ones(height,width,dim);
-for c=3:3%1:length(cases) 
+for c=1:2%1:length(cases) 
     label = cases{c};
     switch label
         case 'Healthy' %'Grey matter'
@@ -159,7 +159,7 @@ for c=3:3%1:length(cases)
                         healthy_file_name = strcat(patch_scale,'_',healthy_file_name);
                         healthy_file_name=strcat(ground_truth_name_no_extension,'_',healthy_file_name);
                         fullname_healthy_multi=fullfile(folder_healthy_multiscale,healthy_file_name);
-                        %imwrite(patch_healthy,fullname_healthy_multi);
+                        imwrite(patch_healthy,fullname_healthy_multi);
                         amount_patches_healthy=amount_patches_healthy+1;
                         fprintf('patch healthy %d is processing...',amount_patches_healthy);
                         fprintf('\n\n');
@@ -213,7 +213,7 @@ for c=3:3%1:length(cases)
                         t_file_name = strcat(patch_scale,'_',t_file_name);
                         t_file_name=strcat(ground_truth_name_no_extension,'_',t_file_name);
                         fullname_t_multi=fullfile(folder_tumour_multiscale,t_file_name);
-                        %imwrite(patch_tumour,fullname_t_multi);
+                        imwrite(patch_tumour,fullname_t_multi);
                         amount_patches_tumour=amount_patches_tumour+1;
                         fprintf('patch tumour %d is processing...',amount_patches_tumour);
                         fprintf('\n\n');                    
@@ -293,7 +293,7 @@ for c=3:3%1:length(cases)
                         o_file_name = strcat(patch_scale,'_',o_file_name);
                         o_file_name=strcat(ground_truth_name_no_extension,'_',o_file_name);
                         fullname_o_multi=fullfile(folder_others_multiscale,o_file_name);           
-                        %imwrite(patch_others,fullname_o_multi);           
+                        imwrite(patch_others,fullname_o_multi);           
                         amount_patches_others=amount_patches_others+1;   
                         fprintf('patch others %d is processing...',amount_patches_others);
                         fprintf('\n\n');                   
