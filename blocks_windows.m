@@ -3,11 +3,12 @@
 clc
 clear all
 %% load right model:
-model_folder= '../trained models/14062018';
+%model_folder= '../trained models/18062018';
+model_folder= '../trained models/old';
 addpath(model_folder);
 %% change parameters:
 % choose fine tuned neural model:
-model_name = 'Googlenet_case1_non_DataZeroCentering_30000TrainingSamples.mat';
+model_name = 'Googlenet_case1video4_high_entropy_balanced.mat';
 model_file=fullfile(model_folder,model_name);
 load (model_file);
 neural_net = googlenetUS;
@@ -15,7 +16,7 @@ neural_net = googlenetUS;
 [path,model_info,ext]=fileparts(model_name);
 %net_infor = strcat(net_type,'_',classes,'classes','_trained on',training_dataset,'_',training_patches_size,'_with_',training_patches_sliding,'sliding');
 % change the overlapping pixels of neighbouring patches:
-size_range_low=8;
+size_range_low=20;
 size_range_low_str=num2str(size_range_low);
 size_range_high=30;
 size_range_high_str=num2str(size_range_high);
@@ -31,7 +32,7 @@ indexes={'0313';'0976';'1041';'1183'};%case1video4
 % testing US images indexes:
 classiy_fun = @(block) classify_US(block,neural_net);%3 classes
 %classiy_fun = @(block) classify_US_5classes(block,neural_net); % 5 classes
-result_storing_path='C:\Users\NeuroBeast\Desktop\results16062018';
+result_storing_path='C:\Users\NeuroBeast\Desktop\result 19062018';
 for i=1:length(indexes)
     classified={};
     index=indexes{i};
@@ -47,6 +48,7 @@ for i=1:length(indexes)
     result=zeros(height,width,dim);
     test_file=imresize(test_file,[height width]);
     for s=size_range_low:size_intermidiate:size_range_high
+        %{
         if (s<=10)
         % for x direction strips:
         classified_US=blockproc(test_file,[s 3*s],classiy_fun);
@@ -72,11 +74,18 @@ for i=1:length(indexes)
         processed=processed+classified_US;
         classified{end+1}=classified_US;          
         elseif (s>=20)
+        %}
         %only for squares
         classified_US=blockproc(test_file,[s s],classiy_fun);
+        if s == size_range_low
+        [processed_height,processed_width,dim]=size(classified_US);
+        processed=zeros(processed_height,processed_width,dim);
         processed=processed+classified_US;
+        else
+            processed=processed+classified_US;
+        end
         classified{end+1}=classified_US;
-        end       
+        %end
         fprintf('Current image index is: %d',i);
         fprintf('\n');
         fprintf('Current box number is: %d',s);
@@ -85,7 +94,7 @@ for i=1:length(indexes)
     result_average=processed/(length(classified));
     % change here:
     block_infor = sprintf('_block size %d',s);
-    result_average_name=strcat('new_high_entropy_',test_name_write,'_',model_info,'_average_between_',size_range_low_str,'_',size_range_high_str,'.jpg');  
+    result_average_name=strcat('labels_',test_name_write,'_',model_info,'_average_between_',size_range_low_str,'_',size_range_high_str,'.jpg');  
     store_file_average_sum=fullfile(result_storing_path,result_average_name); 
     imwrite(result_average,store_file_average_sum);
     figure

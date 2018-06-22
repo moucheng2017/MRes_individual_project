@@ -2,8 +2,6 @@ clc
 clear all
 % navigate to the folder
 folder = uigetdir;
-height = 227;
-width = 227;
 cases={'healthy';'tumour';'others'};
 for j=1:length(cases)
     case_temp=cases{j};
@@ -12,11 +10,11 @@ for j=1:length(cases)
     m_files = dir(fullfile(folder_temp,'*.jpg')); 
     m_files = {m_files.name};
     for i = 1:length(m_files)
-    file_temp = imread(m_files{i});
-    file_temp=rgb2gray(file_temp);
-    new_file=imadjust(file_temp);
-    %new_file=imresize(file_temp,[height width]);
-    fullname = fullfile(folder_temp,m_files{i});
+    m_file = m_files{i};
+    file_temp = imread(m_file);
+    new_file=fliplr(file_temp);
+    m_file = strcat('flipped_',m_file);
+    fullname = fullfile(folder_temp,m_file);
     imwrite(new_file,fullname);
     fprintf('processing 2 ...')
     fprintf('\n\n');

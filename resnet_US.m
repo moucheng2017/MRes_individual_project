@@ -3,34 +3,25 @@ clc
 clear all
 training_folder = uigetdir;
 training_data_total = imageDatastore(training_folder,'IncludeSubfolders',true,'LabelSource','foldernames');
-[train,validate] = splitEachLabel(training_data_total,4168,'randomized');
+[train,validate] = splitEachLabel(training_data_total,5500,'randomized');
 %%
-net = resnet101;
+inputlayer=imageInputLayer([224 224 3],'Name','inputlayer','Normalization','none');
+net = resnet50;
 lgraph = layerGraph(net);
-%{
-figure('Units','normalized','Position',[0.1 0.1 0.8 0.8]);
-plot(lgraph)
-%}
-lgraph = removeLayers(lgraph, {'prob','ClassificationLayer_predictions'});
+lgraph=replaceLayer(lgraph,'input_1',inputlayer);
+lgraph = removeLayers(lgraph, {'fc1000_softmax','ClassificationLayer_fc1000'});
 newLayers = [
-    dropoutLayer(0.5,'Name','dropoutlayer_new1')
-    fullyConnectedLayer(1000,'Name','new_fc1000')
     dropoutLayer(0.5,'Name','dropoutlayer_new2')
-    fullyConnectedLayer(100,'Name','new_fc100')
-    dropoutLayer(0.5,'Name','dropoutlayer_new3')
     fullyConnectedLayer(3,'Name','fc_new','WeightLearnRateFactor',10,'BiasLearnRateFactor',10)
     softmaxLayer('Name','softmax')
     classificationLayer('Name','classoutput')];
 lgraph = addLayers(lgraph,newLayers);
-lgraph = connectLayers(lgraph,'fc1000','dropoutlayer_new1');
-%figure('Units','normalized','Position',[0.3 0.3 0.4 0.4]);
-%plot(lgraph)
-%ylim([0,10])
+lgraph = connectLayers(lgraph,'fc1000','dropoutlayer_new2');
+%    fullyConnectedLayer(1000,'Name','new_fc1000')
 %% freeze layers
 layers = lgraph.Layers;
 connections = lgraph.Connections;
-%layers(1:311) = freezeWeights(layers(1:311));% up to res4b22 layer, except for res5a,b,c modules
-layers(1:333) = freezeWeights(layers(1:333));% up to res5b layer, except for last res modules
+layers(1:163) = freezeWeights(layers(1:163));% up to activation_46_relu, except for last res modules
 lgraph = createLgraphUsingConnections(layers,connections);
 %% data augmentation
 %{
@@ -72,17 +63,20 @@ opts = trainingOptions('sgdm', ...
 %}
 opts = trainingOptions('adam', ...
     'InitialLearnRate',0.001, ...
-    'MaxEpochs',200,...
-    'MiniBatchSize',256,...
+    'MaxEpochs',150,...
+    'MiniBatchSize',128,...
     'Verbose',true,...
     'GradientDecayFactor',0.9,...
     'SquaredGradientDecayFactor',0.999,...
-    'Epsilon',0.01,...
-    'ExecutionEnvironment','multi-gpu',...
+    'Epsilon',0.1,...
+    'ValidationData',validate,...
+    'ValidationFrequency',20,...
+    'ValidationPatience',Inf,...
+    'ExecutionEnvironment','multi-g pu',...
     'Plots','training-progress');
+
 [resnetUS,info] = trainNetwork(train, lgraph, opts);
-model_name='resnet_case1_20_80_50%sliding_high_intensity_more_dropout.mat';
-model_folder= '../trained models/11062018';
+model_name='resnet_case1_50%sliding_high_intensity.mat';
+model_folder= '../trained models/18062018';
 model=fullfile(model_folder,model_name);
 save (model,'resnetUS')
-

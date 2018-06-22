@@ -3,48 +3,35 @@ clc
 clear all
 training_folder = uigetdir;
 training_data_total = imageDatastore(training_folder,'IncludeSubfolders',true,'LabelSource','foldernames');
-[train,validate] = splitEachLabel(training_data_total,30000,'randomized');
+training_data_total = shuffle(training_data_total);
+[train,leftdata] = splitEachLabel(training_data_total,5400,'randomized');
+leftdata = shuffle(leftdata);
+[validate,test]=splitEachLabel(leftdata,1800,'randomized');
 %% 
 inputlayer=imageInputLayer([224 224 3],'Name','inputlayer','Normalization','none');
-%lgraph1=layerGraph(inputlayer);
 net = googlenet;
-%layers=net.Layers;
-%layers(1)=inputlayer;
 lgraph = layerGraph(net);%figure('Units','normalized','Position',[0.1 0.1 0.8 0.8]);plot(lgraph);
 lgraph=replaceLayer(lgraph,'data',inputlayer);
-%lgraph = addLayers(lgraph,inputlayer);
-%lgraph = connectLayers(lgraph,'inputlayer','conv1-7x7_s2');
 lgraph = removeLayers(lgraph, {'prob','output'});
-%new_lgraph = addLayers(lgraph1,lgraph);
-%plot(new_lgraph)
 Layers = [
-    fullyConnectedLayer(1000,'Name','fc_new1')
-    dropoutLayer(0.5,'Name','dropoutlayer_new1')
+    fullyConnectedLayer(1000,'Name','fcl_new1')
+    dropoutLayer(0.8,'Name','dropoutlayer_new1')
     fullyConnectedLayer(3,'Name','fc','WeightLearnRateFactor',10,'BiasLearnRateFactor',10)
     softmaxLayer('Name','softmax')
     classificationLayer('Name','classoutput')];
 lgraph = addLayers(lgraph,Layers);
-lgraph = connectLayers(lgraph,'loss3-classifier','fc_new1');
-%figure('Units','normalized','Position',[0.3 0.3 0.4 0.4]);
-%plot(lgraph)
-%ylim([0,10])
+lgraph = connectLayers(lgraph,'loss3-classifier','fcl_new1');
+
 %% freeze layers
 layers = lgraph.Layers;
 connections = lgraph.Connections;
-%layers(1:110) = freezeWeights(layers(1:110));
-layers(1:96) = freezeWeights(layers(1:96));
+layers(1:39) = freezeWeights(layers(1:39));%layer39:'pool3-3x3_s2' 
 lgraph = createLgraphUsingConnections(layers,connections);
-
 %% data augmentation
-%{
-pixelRange = [-20 20];
-imageAugmenter = imageDataAugmenter( ...
-    'RandXReflection',true, ...
-    'RandXTranslation',pixelRange, ...
-    'RandYTranslation',pixelRange);
+imageAugmenter = imageDataAugmenter('RandRotation',[-30 30],...
+                                    'RandXReflection',true);
 augimdsTrain = augmentedImageDatastore([224 224],train, ...
     'DataAugmentation',imageAugmenter);
-%}
 %%
 %{
 opts = trainingOptions('sgdm', ...
@@ -58,24 +45,22 @@ opts = trainingOptions('sgdm', ...
     'ExecutionEnvironment','multi-gpu',...
     'Plots','training-progress');
 %}
-
 opts = trainingOptions('adam', ...
     'InitialLearnRate',0.001, ...
-    'MaxEpochs',200,...
-    'MiniBatchSize',256,...
+    'MaxEpochs',300,...
+    'MiniBatchSize',64,...
     'Verbose',true,...
     'GradientDecayFactor',0.9,...
     'SquaredGradientDecayFactor',0.999,...
     'Epsilon',0.01,...
     'ValidationData',validate,...
-    'ValidationFrequency',30,...
-    'ValidationPatience',20,...
+    'ValidationFrequency',50,...
+    'ValidationPatience',100,...
     'ExecutionEnvironment','multi-gpu',...
     'Plots','training-progress');
-
-[googlenetUS,info] = trainNetwork(train, lgraph, opts);
-%[googlenetUS,info] = trainNetwork(augimdsTrain, net, opts);% keep training the old model
-model_name='Googlenet_case1_non_DataZeroCentering_30000TrainingSamples.mat';
-model_folder= '../trained models/14062018';
-model1=fullfile(model_folder,model_name);
-save (model_name,'googlenetUS','info')
+[googlenetUS,info] = trainNetwork(augimdsTrain, lgraph, opts);
+model_name='Googlenet_case1_39LayersFrozen_20_40Patches.mat';
+model_folder= '../trained models/18062018';
+model=fullfile(model_folder,model_name);
+save (model,'googlenetUS','info','test')
+%%

@@ -1,7 +1,7 @@
 clc
 clear all
 %%
-folder = 'C:\Users\NeuroBeast\Desktop\case1video4 raw\Others';
+folder = 'C:\Users\NeuroBeast\Desktop\case1 video1 50% overlapping square high intensity\Others';
 allfiles=dir(fullfile(folder,'*.jpg'));
 allfiles={allfiles.name};
 entropy_mean = 0;
