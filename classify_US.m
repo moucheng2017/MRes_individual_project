@@ -3,7 +3,7 @@ threshold=10;
 data = block.data;
 [a,b,c] = size(data);
 temp = ones(a,b,c);
-new_data = imresize(data,[224 224]);
+new_data = imresize(data,[32 32]);
 mean_data = mean(new_data(:));
 %{
 %e = entropy(new_data);
@@ -23,7 +23,7 @@ elseif (e>4.2975 && e<4.8445)
     data= temp;
     %}
 %else
-if (mean_data<threshold)
+if (mean_data<=threshold)
     temp(1:a,1:b,1)= 0;
     temp(1:a,1:b,2)= 0;
     temp(1:a,1:b,3)= 0;

@@ -4,15 +4,19 @@ clear all
 training_folder = uigetdir;
 training_data_total = imageDatastore(training_folder,'IncludeSubfolders',true,'LabelSource','foldernames');
 training_data_total = shuffle(training_data_total);
-[train,leftdata] = splitEachLabel(training_data_total,5400,'randomized');
+[train,leftdata] = splitEachLabel(training_data_total,6744,'randomized');
+%[train,validate] = splitEachLabel(training_data_total,7200,'randomized');
 leftdata = shuffle(leftdata);
-[validate,test]=splitEachLabel(leftdata,1800,'randomized');
+[validate,test]=splitEachLabel(leftdata,2248,'randomized');
 %% 
 inputlayer=imageInputLayer([224 224 3],'Name','inputlayer','Normalization','none');
 net = googlenet;
 lgraph = layerGraph(net);%figure('Units','normalized','Position',[0.1 0.1 0.8 0.8]);plot(lgraph);
 lgraph=replaceLayer(lgraph,'data',inputlayer);
 lgraph = removeLayers(lgraph, {'prob','output'});
+%%
+% for 1:39 layers frozen
+%{
 Layers = [
     fullyConnectedLayer(1000,'Name','fcl_new1')
     dropoutLayer(0.8,'Name','dropoutlayer_new1')
@@ -21,10 +25,20 @@ Layers = [
     classificationLayer('Name','classoutput')];
 lgraph = addLayers(lgraph,Layers);
 lgraph = connectLayers(lgraph,'loss3-classifier','fcl_new1');
-
+%}
+% for all layers frozen in front of fcl
+Layers = [
+    fullyConnectedLayer(1000,'Name','fc_new_1')
+    fullyConnectedLayer(100,'Name','fc_new_2')
+    fullyConnectedLayer(3,'Name','fc_new_3','WeightLearnRateFactor',10,'BiasLearnRateFactor',10)
+    softmaxLayer('Name','softmax')
+    classificationLayer('Name','classoutput')];
+lgraph = addLayers(lgraph,Layers);
+lgraph = connectLayers(lgraph,'loss3-classifier','fc_new_1');
 %% freeze layers
 layers = lgraph.Layers;
 connections = lgraph.Connections;
+%layers(1:141) = freezeWeights(layers(1:141));%layer39:'pool3-3x3_s2' 
 layers(1:39) = freezeWeights(layers(1:39));%layer39:'pool3-3x3_s2' 
 lgraph = createLgraphUsingConnections(layers,connections);
 %% data augmentation
@@ -47,7 +61,10 @@ opts = trainingOptions('sgdm', ...
 %}
 opts = trainingOptions('adam', ...
     'InitialLearnRate',0.001, ...
-    'MaxEpochs',300,...
+    'LearnRateSchedule','piecewise',...
+    'LearnRateDropFactor',0.1,...
+    'LearnRateDropPeriod',30,...
+    'MaxEpochs',80,...
     'MiniBatchSize',64,...
     'Verbose',true,...
     'GradientDecayFactor',0.9,...
@@ -55,12 +72,14 @@ opts = trainingOptions('adam', ...
     'Epsilon',0.01,...
     'ValidationData',validate,...
     'ValidationFrequency',50,...
-    'ValidationPatience',100,...
+    'ValidationPatience',Inf,...
     'ExecutionEnvironment','multi-gpu',...
+    'CheckpointPath','C:\Users\NeuroBeast\Desktop\network_checkpoints',...
     'Plots','training-progress');
 [googlenetUS,info] = trainNetwork(augimdsTrain, lgraph, opts);
-model_name='Googlenet_case1_39LayersFrozen_20_40Patches.mat';
-model_folder= '../trained models/18062018';
+model_name='Googlenet_case1video4_39LayersFrozen_20to40DensePatches_60%training.mat';
+%model_name='Googlenet_case1_141LayersFrozen_20_40Patches.mat';
+model_folder= '../trained models/20180623';
 model=fullfile(model_folder,model_name);
 save (model,'googlenetUS','info','test')
 %%

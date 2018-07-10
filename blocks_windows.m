@@ -3,15 +3,17 @@
 clc
 clear all
 %% load right model:
+%model_folder= '../trained models/11062018';
 %model_folder= '../trained models/18062018';
-model_folder= '../trained models/old';
+%model_folder= '../trained models/11062018';
+model_folder= '../trained models/resnet16';
 addpath(model_folder);
 %% change parameters:
 % choose fine tuned neural model:
-model_name = 'Googlenet_case1video4_high_entropy_balanced.mat';
+model_name = 'resnet16_v5_w96_case1video4_3.mat';
 model_file=fullfile(model_folder,model_name);
 load (model_file);
-neural_net = googlenetUS;
+neural_net = net;
 % change the fine tuned neural model name:
 [path,model_info,ext]=fileparts(model_name);
 %net_infor = strcat(net_type,'_',classes,'classes','_trained on',training_dataset,'_',training_patches_size,'_with_',training_patches_sliding,'sliding');
@@ -32,7 +34,7 @@ indexes={'0313';'0976';'1041';'1183'};%case1video4
 % testing US images indexes:
 classiy_fun = @(block) classify_US(block,neural_net);%3 classes
 %classiy_fun = @(block) classify_US_5classes(block,neural_net); % 5 classes
-result_storing_path='C:\Users\NeuroBeast\Desktop\result 19062018';
+result_storing_path='C:\Users\NeuroBeast\Desktop\result 20180704';
 for i=1:length(indexes)
     classified={};
     index=indexes{i};
@@ -47,7 +49,7 @@ for i=1:length(indexes)
     [height,width,dim]=size(test_file);
     result=zeros(height,width,dim);
     test_file=imresize(test_file,[height width]);
-    for s=size_range_low:size_intermidiate:size_range_high
+    for s=size_range_low:size_intermidiate:size_range_high 
         %{
         if (s<=10)
         % for x direction strips:
@@ -64,7 +66,7 @@ for i=1:length(indexes)
         classified_US=blockproc(test_file,[3*s s],classiy_fun);
         processed=processed+classified_US;
         classified{end+1}=classified_US;         
-        elseif (s>10 && s<=13)
+        elseif (s>10 && s<=15)
         % for x direction strips:
         classified_US=blockproc(test_file,[s 2*s],classiy_fun);
         processed=processed+classified_US;

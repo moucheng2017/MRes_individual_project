@@ -3,80 +3,178 @@ clc
 clear all
 training_folder = uigetdir;
 training_data_total = imageDatastore(training_folder,'IncludeSubfolders',true,'LabelSource','foldernames');
-[train,validate] = splitEachLabel(training_data_total,5500,'randomized');
+training_data_total = shuffle(training_data_total);
+[train,leftdata] = splitEachLabel(training_data_total,6400,'randomized');
+leftdata = shuffle(leftdata);
+[validate,leftdata_2]=splitEachLabel(leftdata,3200,'randomized');
+leftdata_2 = shuffle(leftdata_2);
+[test,leftdata_3]=splitEachLabel(leftdata_2,650,'randomized');
 %%
-inputlayer=imageInputLayer([224 224 3],'Name','inputlayer','Normalization','none');
-net = resnet50;
+%{
+model_folder= '../trained models/20180623';
+addpath(model_folder);
+model_name = 'resnet101_case1video4_20_40Patches50%Overlapping_60%training_30epochs.mat';
+model_file=fullfile(model_folder,model_name);
+load (model_file);
+net = resnetUS;
 lgraph = layerGraph(net);
-lgraph=replaceLayer(lgraph,'input_1',inputlayer);
-lgraph = removeLayers(lgraph, {'fc1000_softmax','ClassificationLayer_fc1000'});
+%}
+%inputlayer=imageInputLayer([224 224 3],'Name','inputlayer','Normalization','none');
+%{
+net = resnet101;
+lgraph = layerGraph(net);
+%lgraph=replaceLayer(lgraph,'data',inputlayer);
+lgraph = removeLayers(lgraph, {'prob','ClassificationLayer_predictions'});
 newLayers = [
-    dropoutLayer(0.5,'Name','dropoutlayer_new2')
-    fullyConnectedLayer(3,'Name','fc_new','WeightLearnRateFactor',10,'BiasLearnRateFactor',10)
+    dropoutLayer(0.5,'Name','dropout_new_1')
+    fullyConnectedLayer(1000,'Name','fc_new_1')
+    dropoutLayer(0.5,'Name','dropout_new_2')
+    fullyConnectedLayer(3,'Name','fc_new_3','WeightLearnRateFactor',10,'BiasLearnRateFactor',10)
     softmaxLayer('Name','softmax')
     classificationLayer('Name','classoutput')];
 lgraph = addLayers(lgraph,newLayers);
-lgraph = connectLayers(lgraph,'fc1000','dropoutlayer_new2');
-%    fullyConnectedLayer(1000,'Name','new_fc1000')
+lgraph = connectLayers(lgraph,'fc1000','dropout_new_1');
 %% freeze layers
 layers = lgraph.Layers;
 connections = lgraph.Connections;
-layers(1:163) = freezeWeights(layers(1:163));% up to activation_46_relu, except for last res modules
+layers(1:79) = freezeWeights(layers(1:79));% up to res4b22;resnet101
+%layers(1:90) = freezeWeights(layers(1:90));% up to first 8 blocks; half depth; resnet50
 lgraph = createLgraphUsingConnections(layers,connections);
+%}
+%{
 %% data augmentation
-%{
-pixelRange = [-20 20];
-imageAugmenter = imageDataAugmenter( ...
-    'RandXReflection',true, ...
-    'RandXTranslation',pixelRange, ...
-    'RandYTranslation',pixelRange);
-augimdsTrain = augmentedImageDatastore([224 224],train, ...
+imageAugmenter = imageDataAugmenter('RandRotation',[-30 30],'RandYReflection',true);
+%    'RandXReflection',true
+augimdsTrain = augmentedImageDatastore([32 32],train, ...
     'DataAugmentation',imageAugmenter);
-%}
 %%
-%{
-opts = trainingOptions('sgdm', ...
-    'InitialLearnRate',0.1, ...
-    'MaxEpochs',2000,...
-    'MiniBatchSize',128,...
-    'ValidationData',validate,...
-    'ValidationFrequency',40,...
-    'LearnRateDropFactor',0.1,...
-    'LearnRateDropPeriod',50,...
-    'Verbose',false ,...
-    'ExecutionEnvironment','multi-gpu',...
-    'Plots','training-progress');
-%}
-%{
-opts = trainingOptions('sgdm', ...
-    'InitialLearnRate',0.0001, ...
-    'MaxEpochs',2000,...
-    'MiniBatchSize',256,...
-    'ValidationData',validate,...
-    'ValidationFrequency',50,...
-    'ValidationPatience',10,...
-    'Verbose',false ,...
-    'LearnRateDropFactor',0.5,...
-    'LearnRateDropPeriod',500,...
-    'ExecutionEnvironment','multi-gpu',...
-    'Plots','training-progress');
-%}
 opts = trainingOptions('adam', ...
-    'InitialLearnRate',0.001, ...
-    'MaxEpochs',150,...
-    'MiniBatchSize',128,...
+    'InitialLearnRate',0.01, ...
+    'LearnRateSchedule','piecewise',...
+    'LearnRateDropFactor',0.1,...
+    'LearnRateDropPeriod',100,...
+    'MaxEpochs',450,...
+    'MiniBatchSize',256,...
     'Verbose',true,...
     'GradientDecayFactor',0.9,...
     'SquaredGradientDecayFactor',0.999,...
-    'Epsilon',0.1,...
+    'Epsilon',0.01,...
     'ValidationData',validate,...
-    'ValidationFrequency',20,...
+    'ValidationFrequency',50,...
     'ValidationPatience',Inf,...
-    'ExecutionEnvironment','multi-g pu',...
+    'ExecutionEnvironment','multi-gpu',...
+    'CheckpointPath','C:\Users\NeuroBeast\Desktop\network_checkpoints_0704',...
     'Plots','training-progress');
-
-[resnetUS,info] = trainNetwork(train, lgraph, opts);
-model_name='resnet_case1_50%sliding_high_intensity.mat';
-model_folder= '../trained models/18062018';
-model=fullfile(model_folder,model_name);
-save (model,'resnetUS')
+%%
+%}
+    model_folder= '../trained models/resnet16';
+    model_name = 'resnet16_v5_w96_case1video4_3.mat';
+    model_file=fullfile(model_folder,model_name);
+    load (model_file);
+    neural_net = net;
+    [FILEPATH,filename,ext] = fileparts(model_name);
+    true_class=test.Labels;
+    preds=classify(net,test);
+    f=figure;
+    plotconfusion(true_class,preds)
+    title(filename)
+    filename=strcat(filename,'.jpg');
+    plot_name=strcat('C:\Users\NeuroBeast\Desktop\resnet16 results\',filename);
+    saveas(f,plot_name);
+%{
+count=1;
+for width=64:32:96
+    count_str=num2str(count);
+    neuralnet=resnet16_v5(width);
+    [net,info] = trainNetwork(augimdsTrain,neuralnet,opts);
+    width_str=num2str(width);
+    model_name_saved=strcat('resnet16_v5_w',width_str,'_case1video4_',count_str,'.mat');
+    model_folder_saved= '../trained models/resnet16';
+    model=fullfile(model_folder_saved,model_name_saved);
+    save (model,'net','info','test');
+    %test
+    [FILEPATH,filename,ext] = fileparts(model_name_saved);
+    true_class=test.Labels;
+    preds=classify(net,test);
+    f=figure;
+    plotconfusion(true_class,preds)
+    title(filename)
+    filename=strcat(filename,'.jpg');
+    plot_name=strcat('C:\Users\NeuroBeast\Desktop\resnet16 results\',filename);
+    saveas(f,plot_name);
+    count=count+1;
+end
+%}
+%
+%{
+count=1;
+for width=32:32:96
+    width_str=num2str(width);
+    count_str=num2str(count);
+    neuralnet=resnet16_v3(width);
+    [net,info] = trainNetwork(augimdsTrain,neuralnet,opts);
+    model_name_saved=strcat('resnet16_v3_w',width_str,'_case1video4_',count_str,'.mat');
+    model_folder_saved= '../trained models/resnet16';
+    model=fullfile(model_folder_saved,model_name_saved);
+    save (model,'net','info','test');
+    %test
+    [FILEPATH,filename,ext] = fileparts(model_name_saved);
+    true_class=test.Labels;
+    preds=classify(net,test);
+    f=figure;
+    plotconfusion(true_class,preds)
+    title(filename)
+    filename=strcat(filename,'.jpg');
+    plot_name=strcat('C:\Users\NeuroBeast\Desktop\resnet16 results\',filename);
+    saveas(f,plot_name);
+    count=count+1;
+end
+%}
+%
+%{
+count=1;
+for width=32:32:96
+    count_str=num2str(count);
+    neuralnet=resnet16_v1(width);
+    [net,info] = trainNetwork(augimdsTrain,neuralnet,opts);
+    model_name_saved=strcat('resnet16_v1_w',width,'_case1video4_',count_str,'.mat');
+    model_folder_saved= '../trained models/resnet16';
+    model=fullfile(model_folder_saved,model_name_saved);
+    save (model,'net','info','test');
+    %test
+    [FILEPATH,filename,ext] = fileparts(model_name_saved);
+    true_class=test.Labels;
+    preds=classify(net,test);
+    f=figure;
+    plotconfusion(true_class,preds)
+    title(filename)
+    filename=strcat(filename,'.jpg');
+    plot_name=strcat('C:\Users\NeuroBeast\Desktop\resnet16 results\',filename);
+    saveas(f,plot_name);
+    count=count+1;
+end
+%}
+%{
+count=1;
+for width=32:32:96
+    count_str=num2str(count);
+    width_str=num2str(width);
+    neuralnet=resnet16_v2(width);
+    [net,info] = trainNetwork(augimdsTrain,neuralnet,opts);
+    model_name_saved=strcat('resnet16_v2_w',width_str,'_case1video4_',count_str,'.mat');
+    model_folder_saved= '../trained models/resnet16';
+    model=fullfile(model_folder_saved,model_name_saved);
+    save (model,'net','info','test');
+    %test
+    [FILEPATH,filename,ext] = fileparts(model_name_saved);
+    true_class=test.Labels;
+    preds=classify(net,test);
+    f=figure;
+    plotconfusion(true_class,preds)
+    title(filename)
+    filename=strcat(filename,'.jpg');
+    plot_name=strcat('C:\Users\NeuroBeast\Desktop\resnet16 results\',filename);
+    saveas(f,plot_name);
+    count=count+1;
+end
+%}
