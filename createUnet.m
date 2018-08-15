@@ -1,29 +1,29 @@
-function lgraph = createUnet()
-
+function lgraph = createUnet(encoderDepth,height,width,netwidth)
+%networkname='U net';
 % EDIT: modify these parameters for your application.
-encoderDepth = 4;
-initialEncoderNumChannels = 64;
-inputTileSize = [224 224 3];
+initialEncoderNumChannels = netwidth;
+inputTileSize = [height width 3];
 convFilterSize = [3 3];
 inputNumChannels = 3;
-numClasses = 4;
+numClasses = 2;
 
-inputlayer = imageInputLayer(inputTileSize,'Name','ImageInputLayer');
+inputlayer = imageInputLayer(inputTileSize,'Name','ImageInputLayer','Normalization','None');
 
 [encoder, finalNumChannels] = iCreateEncoder(encoderDepth, convFilterSize, initialEncoderNumChannels, inputNumChannels);
 
 firstConv = createAndInitializeConvLayer(convFilterSize, finalNumChannels, ...
     2*finalNumChannels, 'Bridge-Conv-1');
 firstReLU = reluLayer('Name','Bridge-ReLU-1');
-
+firstBN = batchNormalizationLayer('Name','Bridge-BN-1');
 secondConv = createAndInitializeConvLayer(convFilterSize, 2*finalNumChannels, ...
     2*finalNumChannels, 'Bridge-Conv-2');
 secondReLU = reluLayer('Name','Bridge-ReLU-2');
+secondBN = batchNormalizationLayer('Name','Bridge-BN-2');
 
-encoderDecoderBridge = [firstConv; firstReLU; secondConv; secondReLU];
+encoderDecoderBridge = [firstConv; firstReLU; firstBN;secondConv; secondReLU;secondBN];
 
 dropOutLayer = dropoutLayer(0.5,'Name','Bridge-DropOut');
-encoderDecoderBridge = [encoderDecoderBridge; dropOutLayer];
+encoderDecoderBridge = [encoderDecoderBridge;dropOutLayer];
 
 initialDecoderNumChannels = finalNumChannels;
 
@@ -35,7 +35,7 @@ layers = [inputlayer; encoder; encoderDecoderBridge; decoder];
 
 
 finalConv = convolution2dLayer(1,numClasses,...
-    'BiasL2Factor',0,...
+    'BiasL2Factor',10,...
     'Name','Final-ConvolutionLayer');
 finalConv.Weights = randn(1,1,finalDecoderNumChannels,numClasses);
 finalConv.Bias = zeros(1,1,numClasses);
@@ -69,15 +69,16 @@ for stage = 1:encoderDepth
         firstConv = createAndInitializeConvLayer(convFilterSize, encoderNumChannels/2, encoderNumChannels, ['Encoder-Stage-' num2str(stage) '-Conv-1']);
     end
     firstReLU = reluLayer('Name',['Encoder-Stage-' num2str(stage) '-ReLU-1']);
-    
+    firstBN=batchNormalizationLayer('Name',['Encoder-Stage-' num2str(stage) '-BN-1']);
     secondConv = createAndInitializeConvLayer(convFilterSize, encoderNumChannels, encoderNumChannels, ['Encoder-Stage-' num2str(stage) '-Conv-2']);
     secondReLU = reluLayer('Name',['Encoder-Stage-' num2str(stage) '-ReLU-2']);
+    secondBN=batchNormalizationLayer('Name',['Encoder-Stage-' num2str(stage) '-BN-2']);
+    encoder = [encoder;firstConv;firstReLU;firstBN;secondConv; secondReLU;secondBN];
     
-    encoder = [encoder;firstConv; firstReLU; secondConv; secondReLU];
     
     if stage == encoderDepth
         dropOutLayer = dropoutLayer(0.5,'Name',['Encoder-Stage-' num2str(stage) '-DropOut']);
-        encoder = [encoder; dropOutLayer];
+        encoder = [encoder;dropOutLayer];
     end
     
     maxPoolLayer = maxPooling2dLayer(2, 'Stride', 2, 'Name',['Encoder-Stage-' num2str(stage) '-MaxPool']);
@@ -97,17 +98,18 @@ for stage = 1:encoderDepth
     
     upConv = createAndInitializeUpConvLayer(upConvFilterSize, 2*decoderNumChannels, decoderNumChannels, ['Decoder-Stage-' num2str(stage) '-UpConv']);
     upReLU = reluLayer('Name',['Decoder-Stage-' num2str(stage) '-UpReLU']);
-    
+    upBN=batchNormalizationLayer('Name',['Decoder-Stage-' num2str(stage) '-upBN-1']);
     % Input feature channels are concatenated with deconvolved features within the decoder.
     depthConcatLayer = depthConcatenationLayer(2, 'Name', ['Decoder-Stage-' num2str(stage) '-DepthConcatenation']);
     
     firstConv = createAndInitializeConvLayer(convFilterSize, 2*decoderNumChannels, decoderNumChannels, ['Decoder-Stage-' num2str(stage) '-Conv-1']);
     firstReLU = reluLayer('Name',['Decoder-Stage-' num2str(stage) '-ReLU-1']);
+    firstBN=batchNormalizationLayer('Name',['Decoder-Stage-' num2str(stage) '-BN-1']);
     
     secondConv = createAndInitializeConvLayer(convFilterSize, decoderNumChannels, decoderNumChannels, ['Decoder-Stage-' num2str(stage) '-Conv-2']);
     secondReLU = reluLayer('Name',['Decoder-Stage-' num2str(stage) '-ReLU-2']);
     
-    decoder = [decoder; upConv; upReLU; depthConcatLayer; firstConv; firstReLU; secondConv; secondReLU];
+    decoder = [decoder; upConv; upReLU;upBN; depthConcatLayer; firstConv; firstReLU;firstBN; secondConv; secondReLU];
 end
 finalDecoderNumChannels = decoderNumChannels;
 end
@@ -117,7 +119,7 @@ function convLayer = createAndInitializeConvLayer(convFilterSize, inputNumChanne
 
 convLayer = convolution2dLayer(convFilterSize,outputNumChannels,...
     'Padding', 'same',...
-    'BiasL2Factor',0,...
+    'BiasL2Factor',5,...
     'Name',layerName);
 
 % He initialization is used
@@ -133,7 +135,7 @@ function upConvLayer = createAndInitializeUpConvLayer(UpconvFilterSize, inputNum
 
 upConvLayer = transposedConv2dLayer(UpconvFilterSize, outputNumChannels,...
     'Stride',2,...
-    'BiasL2Factor',0,...
+    'BiasL2Factor',10,...
     'Name',layerName);
 
 % The transposed conv filter size is a scalar

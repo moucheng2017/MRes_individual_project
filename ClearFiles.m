@@ -4,17 +4,17 @@ clear all
 folder = uigetdir;
 %file_extension='*.jpg';
 %cases={'Grey matter';'Tumour';'Others';'White matter'};
-cases={'Healthy';'Others';'Tumour'};
+cases={'labels train';'patches train'};
 %case1video1:
 %threshold_healthy =4.8726-0*1.058184;
 %threshold_others = 2.92+0.5*2.755;
 %case1video4:
-mean_thresh = 25;
-entropy_threshold_healthy =3.3179-0*1.9284;
-entropy_threshold_others = 6.053232-0.5*1.03511;
+%mean_thresh = 25;
+%entropy_threshold_healthy =3.3179-0*1.9284;
+%entropy_threshold_others = 6.053232-0.5*1.03511;
 %cases = {'White matter';'Grey matter';'Tumour';'Sulcus';'Others'};
 %% clear all the files under threshold values
-
+%{
 for j=1:length(cases)
     case_temp=cases{j};
     folder_temp=strcat(folder,'\',case_temp);
@@ -77,10 +77,10 @@ for j=1:length(cases)
             end 
     end
 end
-
+%}
 %% for deleting all files in the seleted folder:
-%{
-file_extension = 'jpg';%change here 
+%
+file_extension = 'png';%change here 
 for j=1:length(cases)
     case_temp=cases{j};
     folder_temp=strcat(folder,'\',case_temp);
@@ -99,7 +99,7 @@ for j=1:length(cases)
     
 
 end
-
+%
 %% for deleting cropped patches in different scales 
 %{
 for i=10:10:100

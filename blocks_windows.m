@@ -18,9 +18,9 @@ neural_net = net;
 [path,model_info,ext]=fileparts(model_name);
 %net_infor = strcat(net_type,'_',classes,'classes','_trained on',training_dataset,'_',training_patches_size,'_with_',training_patches_sliding,'sliding');
 % change the overlapping pixels of neighbouring patches:
-size_range_low=20;
+size_range_low=30;
 size_range_low_str=num2str(size_range_low);
-size_range_high=30;
+size_range_high=20;
 size_range_high_str=num2str(size_range_high);
 size_intermidiate=1;
 %test_imgs_path = uigetdir;
@@ -36,7 +36,7 @@ classiy_fun = @(block) classify_US(block,neural_net);%3 classes
 %classiy_fun = @(block) classify_US_5classes(block,neural_net); % 5 classes
 result_storing_path='C:\Users\NeuroBeast\Desktop\result 20180704';
 for i=1:length(indexes)
-    classified={};
+    %classified={};
     index=indexes{i};
     test_name_read=strcat('case1_Coronal+00',index,'-000.jpg');%casevideo4
     test_name_write=strcat('case1_case1_Coronal+00',index);%case1video4 
@@ -47,9 +47,9 @@ for i=1:length(indexes)
     test_fullname = fullfile(test_imgs_path,test_name_read);
     test_file=imread(test_fullname);
     [height,width,dim]=size(test_file);
-    result=zeros(height,width,dim);
+    %result=zeros(height,width,dim);
     test_file=imresize(test_file,[height width]);
-    for s=size_range_low:size_intermidiate:size_range_high 
+    %for s=size_range_low%:size_intermidiate:size_range_high 
         %{
         if (s<=10)
         % for x direction strips:
@@ -79,6 +79,7 @@ for i=1:length(indexes)
         %}
         %only for squares
         classified_US=blockproc(test_file,[s s],classiy_fun);
+        %{
         if s == size_range_low
         [processed_height,processed_width,dim]=size(classified_US);
         processed=zeros(processed_height,processed_width,dim);
@@ -88,15 +89,16 @@ for i=1:length(indexes)
         end
         classified{end+1}=classified_US;
         %end
+        %}
         fprintf('Current image index is: %d',i);
         fprintf('\n');
         fprintf('Current box number is: %d',s);
         fprintf('\n');
-    end
-    result_average=processed/(length(classified));
+    %end
+    %result_average=processed/(length(classified));
     % change here:
     block_infor = sprintf('_block size %d',s);
-    result_average_name=strcat('labels_',test_name_write,'_',model_info,'_average_between_',size_range_low_str,'_',size_range_high_str,'.jpg');  
+    %result_average_name=strcat('labels_',test_name_write,'_',model_info,'_average_between_',size_range_low_str,'_',size_range_high_str,'.jpg');  
     store_file_average_sum=fullfile(result_storing_path,result_average_name); 
     imwrite(result_average,store_file_average_sum);
     figure

@@ -5,15 +5,17 @@ clear all
 folder = uigetdir;
 path = folder;
 addpath(path);
-m_files = dir(fullfile(folder,'*.jpg')); 
+m_files = dir(fullfile(folder,'*.jpeg')); 
 m_files = {m_files.name};
-overlapping=20;
+%overlapping=20;
 %%
 for i = 1:length(m_files)
     file_temp = imread(m_files{i});
     [height,width,channels]=size(file_temp);
-    new_file = imcrop(file_temp,[overlapping overlapping width-2*overlapping height-2*overlapping]);
+    new_file = imcrop(file_temp,[0 70 width height-100]);
     fullname = fullfile(path,m_files{i});
+    figure
+    imshow(new_file);
     imwrite(new_file,fullname);
 end
 

@@ -1,0 +1,61 @@
+%resnet18_Unet_v2
+% encoder: full-pre activation resnet-18 with leaky-relu
+netWidth=64;
+encoder = [
+    imageInputLayer([224 224 3],'Name','input','Normalization','None')
+    convolution2dLayer(3,netWidth,'Padding','same','Name','convInp')
+    batchNormalizationLayer('Name','BNInp')
+    leakyReluLayer(0.1,'Name','leaky_relu_Inp');
+    
+    convolutionalUnit(netWidth,2,'en_s1_1_',0.3,'NormReluCon')
+    additionLayer(2,'Name','add_en_s1_1')
+    convolutionalUnit(netWidth,1,'en_s1_2_',0.3,'NormReluCon')
+    additionLayer(2,'Name','add_en_s1_2')
+    
+    convolutionalUnit(2*netWidth,2,'en_s2_1_',0.3,'NormReluCon')
+    additionLayer(2,'Name','add_en_s2_1')
+    convolutionalUnit(2*netWidth,1,'en_s2_2_',0.3,'NormReluCon')   
+    additionLayer(2,'Name','add_en_s2_2')
+    
+    convolutionalUnit(4*netWidth,2,'en_s3_1_',0.3,'NormReluCon')
+    additionLayer(2,'Name','add_en_s3_1')
+    convolutionalUnit(4*netWidth,1,'en_s3_2_',0.3,'NormReluCon')   
+    additionLayer(2,'Name','add_en_s3_2')
+    
+    convolutionalUnit(8*netWidth,2,'en_s4_1_',0.3,'NormReluCon')
+    additionLayer(2,'Name','add_en_s4_1')
+    convolutionalUnit(8*netWidth,1,'en_s4_2_',0.3,'NormReluCon')
+    additionLayer(2,'Name','add_en_s4_2')];
+
+skip1=[
+    maxPooling2dLayer([2 2],'Stride',2,'Name','skip_pool1')
+    batchNormalizationLayer('Name','skipBN1')];
+encoder = addLayers(encoder,skip1);
+skip2=[
+    maxPooling2dLayer([2 2],'Stride',2,'Name','skip_pool2')
+    batchNormalizationLayer('Name','skipBN2')];
+encoder = addLayers(encoder,skip2);
+skip3=[
+    maxPooling2dLayer([2 2],'Stride',2,'Name','skip_pool3')
+    batchNormalizationLayer('Name','skipBN3')];
+encoder = addLayers(encoder,skip3);
+skip4=[
+    maxPooling2dLayer([2 2],'Stride',2,'Name','skip_pool4')
+    batchNormalizationLayer('Name','skipBN2')];
+encoder = addLayers(encoder,skip4);
+%---------------------------------------------------------------------------
+% not finished...
+function connect_skip_connection(skip_index)
+skip_connection_index=num2str(skip_index);
+if (skip_index==1)
+source='leaky_relu_Inp';
+destination='add_en_s1_1';
+else
+source=;
+end
+encoder = connectLayers(encoder,source,destination);
+
+end
+
+
+analyzeNetwork(encoder);
