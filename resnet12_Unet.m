@@ -5,7 +5,10 @@ networkname='resnet12_Unet';
 %netWidth=32;
 layers = [
     imageInputLayer([height width 3],'Name','input','Normalization','None')
-    convolution2dLayer(3,netWidth,'Padding','same','Stride',1,'Name','convInp')
+    convolution2dLayer(3,netWidth,'Padding','same','Stride',1,'Name','convInp0')  
+    reluLayer('Name','bridge_Inp')
+    batchNormalizationLayer('Name','Inp_BN1')
+    convolution2dLayer(3,netWidth,'Padding','same','Stride',1,'Name','convInp') 
     %encoder s1
     residual_block(netWidth,'s1u1',1)
     residual_block(netWidth,'s1u2',0)
@@ -19,6 +22,7 @@ layers = [
     residual_block(netWidth*8,'s4u1',1)
     residual_block(netWidth*8,'s4u2',0) 
     % bridge
+    %maxPooling2dLayer(2,'Stride',2,'Padding',[0 0 0 0],'Name','bridge_maxpooling')
     batchNormalizationLayer('Name','bridge_BN1')  
     reluLayer('Name','bridge_relu1')
     convolution2dLayer(3,netWidth*16,'Padding','same','Stride',2,'Name','bridge_conv1')
@@ -40,7 +44,7 @@ layers = [
     %
     batchNormalizationLayer('Name','final_BN')  
     reluLayer('Name','final_relu')    
-    convolution2dLayer([1 1],classes,'Padding','same','Stride',[1 1],'BiasL2Factor',10,'Name','final_conv');
+    convolution2dLayer([1 1],classes,'Padding','same','Stride',[1 1],'BiasL2Factor',20,'Name','final_conv');
     softmaxLayer('Name','softmax')
     Fb_loss_v3('fb classification',beta)
     ];

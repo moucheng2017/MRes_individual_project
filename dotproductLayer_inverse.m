@@ -1,6 +1,7 @@
 classdef dotproductLayer_inverse < nnet.layer.Layer
     
     properties
+        
         % (Optional) Layer properties
         %dims
         %CoarseFeatures

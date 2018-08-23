@@ -20,19 +20,19 @@ prompt4='what is the sliding of patch?';
 sliding_x = input(prompt4);
 sliding_y = sliding_x;
 %prompt5='what is the type of patches? originial or preprocessed?';
-type=' original';
+type=' testing';
 
 %type=input(prompt5,'s');
 us_folder=strcat('C:\Users\NeuroBeast\Desktop\us + masks\',case_video_infor,'\US');
 labels_folder=strcat('C:\Users\NeuroBeast\Desktop\us + masks\',case_video_infor,'\Labels');
 addpath(us_folder);
 addpath(labels_folder);
-%us_patches_folder='C:\Users\NeuroBeast\Desktop\us patches\case3\train';
-%labels_patches_folder='C:\Users\NeuroBeast\Desktop\us patches\case3\labels';
+%us_patches_folder='C:\Users\NeuroBeast\Desktop\case2 + case3 test\patches';
+%labels_patches_folder='C:\Users\NeuroBeast\Desktop\case2 + case3 test\labels';
 us_patches_folder=strcat('C:\Users\NeuroBeast\Desktop\',case_video_infor,type,'\patches');
 labels_patches_folder=strcat('C:\Users\NeuroBeast\Desktop\',case_video_infor,type,'\labels');
 %
-us_files = dir(fullfile(us_folder,'*.jpeg')); 
+us_files = dir(fullfile(us_folder,'*.png')); 
 us_files = {us_files.name};
 labels_files = dir(fullfile(labels_folder,'*.png')); 
 labels_files = {labels_files.name};

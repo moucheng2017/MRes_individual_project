@@ -1,18 +1,13 @@
-clc
-clear all
-% create stitched segmented images
-% load net
-model_folder= '../trained models/20180821';
-addpath(model_folder);
-model_name_mat = 'attention_network_5stages_v1_2_new_train_case2+case5 large original_validate_case3 large original_fb v3 fb=1.25_200epochs.mat';
-[f_model,model_name,ext_model]=fileparts(model_name_mat);
+function test=test_model(net,model_name)
+%model_name_mat = 'attention_network_5stages_v1_2_new_train_case2+case5 large original_validate_case3 large original_fb v3 fb=1.25_200epochs.mat';
+%[f_model,model_name,ext_model]=fileparts(model_name);
 mkdir('C:\Users\NeuroBeast\Desktop\results 20180822',model_name);
-model_file=fullfile(model_folder,model_name_mat);
-network=load (model_file);
-net=network.net1;
+
 %%
+classificationlayer='classification';
+%classificationlayer='pixelLabels';
 %classificationlayer='Segmentation-Layer';
-classificationlayer='fb classification';
+%classificationlayer='fb classification';
 % test images:
 test_folder='case6';
 test_folder=strcat('C:\Users\NeuroBeast\Desktop\us + masks\',test_folder,'\US');
@@ -99,6 +94,7 @@ for i =1:length(all_files)
     saving_folder=strcat('C:\Users\NeuroBeast\Desktop\results 20180822\',model_name);
     saving_file_name=strcat('mask_',test_name,'.png');
     name=fullfile(saving_folder,saving_file_name);
-    %name = strcat('C:\Users\NeuroBeast\Desktop\results 20180822\',test_name,'_',model_name,'.png');
     imwrite(test,name);
+    fprintf('processing new image ...')
+    fprintf('\n\n');  
 end

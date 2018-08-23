@@ -5,9 +5,9 @@ switch options
     case 1        
 end
 %}
-folder_path='C:\Users\NeuroBeast\Desktop\us + masks\case3\US\adhist new';
+folder_path='C:\Users\NeuroBeast\Desktop\case2+3 US preprocessing';
 %folder_path=strcat(folder_path,casename);
-all_files = dir(fullfile(folder_path,'\*.png'));
+all_files = dir(fullfile(folder_path,'\*.jpeg'));
 all_files = {all_files.name}';
 amount=length(all_files);
 for i =1:amount
@@ -15,11 +15,12 @@ for i =1:amount
     img=fullfile(folder_path,file_name);
     img=imread(img);
     %img=imresize(img,[580 562]);
-    [heigh,width,channels]=size(img);
+    [height,width,channels]=size(img);
+    img=reshape(img,[1,height*width*channels]);
     if i==1
         sum_matrix=img;
     else
-        sum_matrix=[sum_matrix;img];
+        sum_matrix=[sum_matrix img];
     end
 end
 %
@@ -45,3 +46,9 @@ for j=1:amount
 end
 %}
 disp('End')
+% mean intensities:
+% case3 before preprocessing: 34.3676
+% case3 after adoptive histogramequlisation: 72.2546
+% case2 before preprocessing: 30.6524
+% case3 after adoptive histogramequlisation: 25.8980
+% case2+case3 before preprocessing: 32.1095

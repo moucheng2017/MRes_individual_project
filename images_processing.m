@@ -7,7 +7,7 @@ folder = uigetdir;
 addpath(folder);
 files = dir(fullfile(folder,'*.png')); 
 files = {files.name};
-operation='13';
+operation='9';
 % choose operations on images:
 % 1: sharp images
 % 2: histogram equlisation
@@ -23,6 +23,7 @@ operation='13';
 % 12:
 % 13: create mask
 % 14: clear scattered objects 
+% 15: make gray images into 3 channels
 for i = 1:length(files)
     file = files{i};
     [FILEPATH,name,EXT] = fileparts(file);
@@ -44,7 +45,7 @@ for i = 1:length(files)
             filename=strcat('histeq_',name,'.png');
         case '3'
             file_temp=rgb2gray(file_temp) ;
-            new_file =adapthisteq(file_temp,'NumTiles',[12 12]);
+            new_file =adapthisteq(file_temp,'NumTiles',[8 8]);
             %new_file =adapthisteq(file_temp,'NumTiles',[100 20],'ClipLimit',0.005,'Distribution','rayleigh','Alpha',0.8);
             new_file= cat(3,new_file,new_file,new_file);
             filename=strcat('adaphis_',name,'.png');
@@ -74,7 +75,6 @@ for i = 1:length(files)
             
             filename = strcat('enhanced_',name,'.png');
 
-
         case '7'
             edgeThreshold = 0.5;
             amount = 0.5;
@@ -87,24 +87,21 @@ for i = 1:length(files)
             filename = strcat('adapthisteq_',name,'.png');
         case '9'
             %mean_value=mean2(file_temp);
-            %mean_value=61.742;%case2 mean
-            mean_value=70.6474;%case3 mean
+            %mean_value=2.2581;%for balancing case2 to case3 
+            mean_value=61.742;%case2 mean
+            %mean_value=66.8855;%case2+case3
+            %mean_value=70.6474;%case3 mean
             %median=median(file_temp);
             %standard_devia=std2(file_temp);
             new_file=(file_temp-mean_value);
             %new_file=2*new_file/standard_devia;
-            filename = strcat('zero_centred_',name,'.png');
+            filename = strcat('balanced_',name,'.png');
         case '10'
-            %new_file=imcrop(file_temp,[0 0 560 580]);
-            new_file=imresize(file_temp,[320 320]);
-            filename = strcat(name,EXT);
-        case '11'
-            %file_temp=file_temp;
-            file_temp=rgb2gray(file_temp);
-            new_file= bwareaopen(file_temp,600,4);
-            
-            %new_file=cat(3,new_file,new_file);
-            filename = strcat('small_objects_removed_',name,'.png');
+            [height,width,channels]=size(file_temp);
+            %cropped_size=320;
+            new_file=imcrop(file_temp,[0 0 width height-30]);
+           % new_file=imresize(new_file,[300 300]);
+            filename = strcat(name,'.png');
         case '12'
             
             new_file=file_temp;
@@ -130,9 +127,7 @@ for i = 1:length(files)
             for kkk=1:height
                 for jjj=1:width
                     if (file_temp(kkk,jjj)<25)
-                        new_file(kkk,jjj)=0;
-
-           
+                        new_file(kkk,jjj)=0;           
                     else
                         new_file(kkk,jjj)=255;
   
@@ -154,8 +149,12 @@ for i = 1:length(files)
             
         case '14'
             file_temp=rgb2gray(file_temp);
-            new_file = bwareaopen(file_temp,1500,4);
-            filename = strcat('cleaned_',name,'.png');
+            new_file = bwareaopen(file_temp,2000,4);
+           % new_file=cat(3,new_file,new_file,new_file);
+            filename = strcat('cleaned_',name,'.tif');
+        case '15'
+            %new_file=cat(3,file_temp,file_temp,file_temp);
+            filename = strcat('3channels_',name,'.tif');
             
     end
     %folder_store='C:\Users\NeuroBeast\Desktop\case2+3 US preprocessing';

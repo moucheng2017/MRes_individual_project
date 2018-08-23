@@ -6,6 +6,9 @@ networkname='resnet8_Unet_v2';
 %netWidth=32;
 layers = [
     imageInputLayer([height width 3],'Name','input','Normalization','None')
+    convolution2dLayer(3,netWidth,'Padding','same','Stride',1,'Name','convInp0')  
+    reluLayer('Name','bridge_Inp')
+    batchNormalizationLayer('Name','Inp_BN1')
     convolution2dLayer(3,netWidth,'Padding','same','Stride',1,'Name','convInp')
     %encoder s1
     residual_block(netWidth,'s1u1',1)
@@ -16,18 +19,18 @@ layers = [
     %encoder s4
     residual_block(netWidth*8,'s4u1',1)
     % bridge
-    maxPooling2dLayer(2,'Stride',2,'Padding',[0 0 0 0],'Name','bridge_maxpooling')
+    %maxPooling2dLayer(2,'Stride',2,'Padding',[0 0 0 0],'Name','bridge_maxpooling')
     batchNormalizationLayer('Name','bridge_BN1')  
     reluLayer('Name','bridge_relu1')
-    convolution2dLayer(3,netWidth*8,'Padding','same','Stride',1,'Name','bridge_conv1')
+    convolution2dLayer(3,netWidth*16,'Padding','same','Stride',2,'Name','bridge_conv1')
     batchNormalizationLayer('Name','bridge_BN2')  
     reluLayer('Name','bridge_relu2')
     dropoutLayer(0.5,'Name','bridge_dropout1')
-    convolution2dLayer(3,netWidth*8,'Padding','same','Stride',1,'Name','bridge_conv2') 
+    convolution2dLayer(3,netWidth*16,'Padding','same','Stride',1,'Name','bridge_conv2') 
     batchNormalizationLayer('Name','bridge_upconv_BN')  
     reluLayer('Name','bridge_upconv_relu')
     dropoutLayer(0.5,'Name','bridge_upconv_dropout') 
-    transposedConv2dLayer(2,netWidth*4,'Stride',2,'Name','bridge_upconv')
+    transposedConv2dLayer(2,netWidth*8,'Stride',2,'Name','bridge_upconv')
     depthConcatenationLayer(2,'Name','concat_bridge')
     % decoder 
     residual_block_decoder(netWidth*8,'d4')

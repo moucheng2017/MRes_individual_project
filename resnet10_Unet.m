@@ -5,7 +5,10 @@ networkname='resnet10_Unet';
 %netWidth=32;
 layers = [
     imageInputLayer([height width 3],'Name','input','Normalization','None')
-    convolution2dLayer(3,netWidth,'Padding','same','Stride',1,'Name','convInp')
+    convolution2dLayer(3,netWidth,'Padding','same','Stride',1,'Name','convInp0')  
+    reluLayer('Name','bridge_Inp')
+    batchNormalizationLayer('Name','Inp_BN1')
+    convolution2dLayer(3,netWidth,'Padding','same','Stride',1,'Name','convInp') 
     %encoder s1
     residual_block(netWidth,'s1u1',1)
     residual_block(netWidth,'s1u2',0)
@@ -59,5 +62,5 @@ layers=connectLayers(layers,'s3u2_add','concat_bridge/in2');
 layers=connectLayers(layers,'s2u2_add','d3_contac/in2');
 layers=connectLayers(layers,'s1u2_add','d2_contac/in2');
 layers=connectLayers(layers,'convInp','d1_contac/in2');
-analyzeNetwork(layers);
+%analyzeNetwork(layers);
 end
