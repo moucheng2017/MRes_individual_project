@@ -7,7 +7,7 @@ folder = uigetdir;
 addpath(folder);
 files = dir(fullfile(folder,'*.png')); 
 files = {files.name};
-operation='9';
+operation='13';
 % choose operations on images:
 % 1: sharp images
 % 2: histogram equlisation
@@ -99,8 +99,8 @@ for i = 1:length(files)
         case '10'
             [height,width,channels]=size(file_temp);
             %cropped_size=320;
-            new_file=imcrop(file_temp,[0 0 width height-30]);
-           % new_file=imresize(new_file,[300 300]);
+            %new_file=imcrop(file_temp,[0 0 300 300]);
+            new_file=imresize(file_temp,[299 299]);
             filename = strcat(name,'.png');
         case '12'
             
@@ -135,7 +135,7 @@ for i = 1:length(files)
                 end
             end
             %filename = strcat(name,'.pbm');
-            new_file=cat(3,new_file,new_file,new_file);
+            %new_file=cat(3,new_file,new_file,new_file);
             filename = strcat(name,'.tif');
             %
             %{

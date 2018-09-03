@@ -1,7 +1,6 @@
-classdef dotproductLayer_inverse < nnet.layer.Layer
+classdef dotproductLayer_new < nnet.layer.Layer
     
     properties
-        
         % (Optional) Layer properties
         %dims
         %CoarseFeatures
@@ -13,7 +12,7 @@ classdef dotproductLayer_inverse < nnet.layer.Layer
     end
 
     methods
-        function layer = dotproductLayer_inverse(name)
+        function layer = dotproductLayer_new(name)
             % Consturctor
             % This function must have the same name as the layer
             
@@ -25,7 +24,7 @@ classdef dotproductLayer_inverse < nnet.layer.Layer
             
             %layer.width = w;
        
-            layer.Description = 'This is a custom layer for inverse attention mechanism';
+            layer.Description = 'This is a custom layer for attention mechanism with interpolation';
         
         end
         
@@ -38,6 +37,8 @@ classdef dotproductLayer_inverse < nnet.layer.Layer
             %         X        -    Input data
             % Output:
             %         Z        -    Output of layer forward function
+            % the first input is fine features
+            % the second input is the coarse features
             size_x=size(X);
             height=size_x(1);
             width=size_x(2);
@@ -45,7 +46,7 @@ classdef dotproductLayer_inverse < nnet.layer.Layer
             half_channels=0.5*channels;
             if (length(size_x)==3)
                 X_1 = X(:,:,1:half_channels);
-                X_1=(-1).*X_1;
+                X_1 = mean(X_1,3);
                 X_2 = X(:,:,half_channels+1:channels);
                 Z=X_1.*X_2;
             else
@@ -53,7 +54,7 @@ classdef dotproductLayer_inverse < nnet.layer.Layer
                 X_new=reshape(X,height,width,minibatch_size*channels);
                 half_channels_minibatch=0.5*minibatch_size*channels;
                 X_1 = X_new(:,:,1:half_channels_minibatch);
-                X_1=(-1).*X_1;
+                X_1 = mean(X_1,3);
                 X_2 = X_new(:,:,half_channels_minibatch+1:minibatch_size*channels);
                 Z=X_1.*X_2;
                 Z=reshape(Z,height,width,half_channels,minibatch_size);
@@ -85,7 +86,6 @@ classdef dotproductLayer_inverse < nnet.layer.Layer
             half_channels=0.5*channels;
             if (length(size_x)==3)
                 X_1 = X(:,:,1:half_channels);
-                X_1=(-1).*X_1;
                 X_2 = X(:,:,half_channels+1:channels);
                 X_new=cat(3,X_2,X_1);
                 dZ_new=repmat(dZ,[1 1 2]);
@@ -95,7 +95,6 @@ classdef dotproductLayer_inverse < nnet.layer.Layer
                 X_new=reshape(X,height,width,minibatch_size*channels);
                 half_channels_minibatch=0.5*minibatch_size*channels;
                 X_1 = X_new(:,:,1:half_channels_minibatch);
-                X_1=(-1).*X_1;
                 X_2 = X_new(:,:,half_channels_minibatch+1:minibatch_size*channels);
                 X_new=cat(3,X_2,X_1);
                 X_new=reshape(X_new,height,width,channels,minibatch_size);

@@ -3,28 +3,33 @@ clc
 clear all
 %% Define parameters for patches:
 % find the images folder:
-training_path = 'C:\Users\NeuroBeast\Desktop\images_high_resolution\Training';
+training_path = 'C:\Users\NeuroBeast\Desktop\us + masks';
 effective_area=1;
 % change here:
-target_folder = 'case1video1 training2';
-%sliding_percentage=0.5;
+target_folder = 'small patches';
 training_size_x=224;
 training_size_y=224;
-%mean_threshold =20;
-mean_threshold=25;
+patient_index = '2';
 % for reading files:
-indexes = {'0000';'0006';'0027';'0203';'0210'};%case1video1
+%indexes = {'0000';'0006';'0027';'0203';'0210'};%case1video1
 %indexes = {'0158';'0429';'0856';'1226';'0340';'0505'};%case1video4
 %cases = {'White matter';'Grey matter';'Tumour';'Others'};
-cases={'Healthy';'Tumour';'Others'};
+% for ultrasound images:
+us_folder=strcat('C:\Users\NeuroBeast\Desktop\us + masks\case',patient_index,'\US');
+label_folder=strcat('C:\Users\NeuroBeast\Desktop\us + masks\case',patient_index,'\Labels');
+us_files = dir(fullfile(us_folder,'*.jpeg')); 
+label_files = dir(fullfile(label_folder,'*.tif'));
+us_files = {us_files.name};
+label_files = {label_files.name};
+% for label images:
+cases={'Healthy';'Tumour'};
 %down_line_los=strfind(target_folder,'_');
 %last_line_lo=down_line_los(end);
 %patch_scale = target_folder(last_line_lo+1:length(target_folder));
 patch_scale = 'square';%rectangle_x: rectangle along x direction;
 %% main programme
 %for s=27:27
-%for s = 10:10
-for s = 37
+for s = 20:10:80
 switch patch_scale
     case 'rectanglex'
         %patch_x_size = 3*s;% for s=10:5:20
@@ -41,7 +46,7 @@ switch patch_scale
         patch_x_size = s;
         patch_y_size = 2*s;%for s=15:5:30
         %patch_y_size = 3*s;%for s =10:5:20
-        if (s<25)
+        if (s<=30)
             sliding_x = patch_x_size;
             sliding_y = patch_y_size;
         else
@@ -52,179 +57,84 @@ switch patch_scale
     case 'square'
         patch_x_size = s;
         patch_y_size = s;  
-        if (s <= 25)
-            sliding_x = 5;%patch_x_size*0.5;
-            sliding_y = 5;%patch_y_size*0.5;
-        else
+        if (s <= 30)
             sliding_x = 10;%patch_x_size*0.5;
             sliding_y = 10;%patch_y_size*0.5;
+        else
+            sliding_x = 20;%patch_x_size*0.5;
+            sliding_y = 20;%patch_y_size*0.5;
         end
 end
 amount_patches_healthy=1;
 amount_patches_tumour=1;
 amount_patches_others=1;
 % transform the ground truth to hsv:
-for no = 2:2%length(indexes)
-index=indexes{no};
+for no = 1:length(us_files)
+%index=indexes{no};
 %read ground truth files:
-ground_truth_name=strcat('case1_Coronal+00',index,'-000.jpg'); 
+ground_truth_name=label_files{no}; 
 [filepath,ground_truth_name_no_extension,extension]=fileparts(ground_truth_name);
-ground_truth_path = strcat(training_path,'\GroundTruth');
-ground_truth_fullname = fullfile(ground_truth_path,ground_truth_name);
+ground_truth_fullname = fullfile(label_folder,ground_truth_name);
 truth=imread(ground_truth_fullname);
 [height,width,dim]=size(truth);
 x_steps = floor((width-patch_x_size+1)/sliding_x);
 y_steps = floor((height-patch_y_size+1)/sliding_y);
 pixels_amount = (patch_x_size)*(patch_y_size);%pixels amount
 %read original US files: 
-%us_name = strcat('case1_Coronal+00',index,'-000.jpg');% for case1video4
-us_name = strcat('case1_video1',index,'.jpeg');%for case1video1
-us_path = strcat(training_path,'\US');
-us_fullname = fullfile(us_path,us_name);
+us_name=us_files{no};
+us_fullname = fullfile(us_folder,us_name);
 us = imread(us_fullname);
-% transofrm the ground truth file into hsv file for enhancing colour:
-hsv_img = rgb2hsv(truth);
-for i = 1:height
-   for j = 1:width
-       hsv_img(i,j,2)=1;
-   end
-end
-% transform the processed hsv back to rgb file:
-processed_truth = hsv2rgb(hsv_img);
-% calculate the mean values for rgb channels:
-R_channel_processed = processed_truth(:,:,1);r=mean2(R_channel_processed);std_r_ground_truth=std2(R_channel_processed);
-G_channel_processed = processed_truth(:,:,2);g=mean2(G_channel_processed);std_g_ground_truth=std2(G_channel_processed);
-B_channel_processed = processed_truth(:,:,3);b=mean2(B_channel_processed);std_b_ground_truth=std2(B_channel_processed);
-%processed_truth_h=ones(height,width,dim);
-processed_truth_whitematter=ones(height,width,dim);
-%processed_truth_sulcus=ones(height,width,dim);
-processed_truth_t=ones(height,width,dim);
-processed_truth_o=ones(height,width,dim);
-processed_truth_h=ones(height,width,dim);
-for c=2:3%1:length(cases) 
+imshow(us);
+hold on
+for c=1:length(cases) 
     label = cases{c};
     switch label
-        case 'Healthy' %'Grey matter'
+        case 'Healthy' 
             folder_healthy_multiscale=strcat('C:\Users\NeuroBeast\Desktop\',target_folder,'\Healthy');
-            for j=1:width
-                for i =1:height
-                    %green in case1video4 is greymatter
-                    %if (processed_truth(i,j,1)< (r+0.5*std_r_ground_truth) && processed_truth(i,j,2)>(g-1*std_g_ground_truth) && processed_truth(i,j,3)>(b-0*std_b_ground_truth))
-                    %green in case1video1 is healthy
-                    if (processed_truth(i,j,1)< (r+0*std_r_ground_truth) && processed_truth(i,j,2)>(g-0*std_g_ground_truth) && processed_truth(i,j,3)>(b-0.5*std_b_ground_truth))
-                        processed_truth_h(i,j,1)=0;
-                        processed_truth_h(i,j,2)=1;
-                        processed_truth_h(i,j,3)=0;
-                     %{
-                    %brown in case1video4 whitematter
-                    elseif (processed_truth(i,j,1)> (r-0.5*std_r_ground_truth) && processed_truth(i,j,2)< (g+0.3*std_g_ground_truth) && processed_truth(i,j,3)< (b-0*std_b_ground_truth))
-                        processed_truth_h(i,j,1)=0;
-                        processed_truth_h(i,j,2)=1;
-                        processed_truth_h(i,j,3)=0;  
-                        %}
-                    %{    
-                    % yellow in case1video4 is sulcus
-                    elseif (processed_truth(i,j,1)> (r+1*std_r_ground_truth) && processed_truth(i,j,2)>(g+0.5*std_g_ground_truth) && processed_truth(i,j,3)<(b-1*std_b_ground_truth))
-                        processed_truth_h(i,j,1)=0;
-                        processed_truth_h(i,j,2)=1;
-                        processed_truth_h(i,j,3)=0;     
-                     %}
-                    else
-                        processed_truth_h(i,j,1)=0;
-                        processed_truth_h(i,j,2)=0;
-                        processed_truth_h(i,j,3)=0;
-                    end
-                end
-            end
-            %figure
-            %imshow(processed_truth_h)
-            figure 
-            imshow(truth)
-            hold on 
-            
+
             for m=0:x_steps
                 for n=0:y_steps
-                    patch = imcrop(processed_truth_h,[2+m*sliding_x 2+n*sliding_y patch_x_size patch_y_size]);
-                    r_channel = patch(:,:,1);
-                    g_channel = patch(:,:,2);
-                    b_channel = patch(:,:,3);
-                    r_sum = sum(sum(r_channel));g_sum = sum(sum(g_channel));b_sum = sum(sum(b_channel));
-                    if (g_sum >= pixels_amount*1*effective_area)
+                    patch = imcrop(truth,[2+m*sliding_x 2+n*sliding_y patch_x_size patch_y_size]);
+                    r_channel = patch(:,:,1);mean_r=mean2(r_channel);
+                    if (mean_r<=1*effective_area)
                     patch_temp = imcrop(us,[2+m*sliding_x 2+n*sliding_y patch_x_size patch_y_size]);
-                    mean_temp = mean(patch_temp(:));
-                    %e_patch = entropy(patch_temp);
-                    if (mean_temp > mean_threshold)
-                    %if (e_patch > (3.3179-0*1.9284))
-                        patch_healthy = patch_temp;
-                        rec = rectangle('Position',[2+m*sliding_x 2+n*sliding_y patch_x_size patch_y_size],'EdgeColor','b','LineWidth',0.5);
-                        patch_healthy=imresize(patch_healthy,[training_size_x training_size_y]);
-                        healthy_file_name = sprintf('patch_healthy_x%d_y%d_%d.jpg',patch_x_size,patch_y_size,amount_patches_healthy);
-                        healthy_file_name = strcat(patch_scale,'_',healthy_file_name);
-                        healthy_file_name=strcat(ground_truth_name_no_extension,'_',healthy_file_name);
-                        fullname_healthy_multi=fullfile(folder_healthy_multiscale,healthy_file_name);
-                        imwrite(patch_healthy,fullname_healthy_multi);
-                        amount_patches_healthy=amount_patches_healthy+1;
-                        fprintf('patch healthy %d is processing...',amount_patches_healthy);
-                        fprintf('\n\n');
+                    patch_healthy = patch_temp;
+                    rec = rectangle('Position',[2+m*sliding_x 2+n*sliding_y patch_x_size patch_y_size],'EdgeColor','b','LineWidth',0.5);
+                    patch_healthy=imresize(patch_healthy,[training_size_x training_size_y]);
+                    healthy_file_name = sprintf('patch_healthy_x%d_y%d_%d.png',patch_x_size,patch_y_size,amount_patches_healthy);
+                    healthy_file_name = strcat('case',patient_index,'_',patch_scale,'_',healthy_file_name);
+                    healthy_file_name=strcat(ground_truth_name_no_extension,'_',healthy_file_name);
+                    fullname_healthy_multi=fullfile(folder_healthy_multiscale,healthy_file_name);
+                    imwrite(patch_healthy,fullname_healthy_multi);
+                    amount_patches_healthy=amount_patches_healthy+1;
+                    fprintf('patch healthy %d is processing...',amount_patches_healthy);
+                    fprintf('\n\n');
                     else
                         %pass
-                    end
-
-                    else
-                        %pass
-                        
                     end
                 end
             end
             hold off
 
         case 'Tumour'
-             folder_tumour_multiscale=strcat('C:\Users\NeuroBeast\Desktop\',target_folder,'\Tumour');
-             for j=1:width
-                for i =1:height
-                    if (processed_truth(i,j,1)< (r+0*std_r_ground_truth) && processed_truth(i,j,2)>(g-0*std_g_ground_truth) && processed_truth(i,j,3)<(b+0*std_b_ground_truth))
-                        processed_truth_t(i,j,1)=1;
-                        processed_truth_t(i,j,2)=0;
-                        processed_truth_t(i,j,3)=0;
-                    else
-                        processed_truth_t(i,j,1)=0;
-                        processed_truth_t(i,j,2)=0;
-                        processed_truth_t(i,j,3)=0;
-                    end
-                end
-             end 
-             figure 
-             imshow(truth)
-             hold on
-             
-             for m=0:x_steps
+            folder_tumour_multiscale=strcat('C:\Users\NeuroBeast\Desktop\',target_folder,'\Tumour');
+            for m=0:x_steps
                 for n=0:y_steps
-                    patch = imcrop(processed_truth_t,[2+m*sliding_x 2+n*sliding_y patch_x_size patch_y_size]);
-                    r_channel = patch(:,:,1);
-                    g_channel = patch(:,:,2);
-                    b_channel = patch(:,:,3);
-                    r_sum = sum(sum(r_channel));g_sum = sum(sum(g_channel));b_sum = sum(sum(b_channel));
-                    if (r_sum >= pixels_amount*1*effective_area)
+                    patch = imcrop(truth,[2+m*sliding_x 2+n*sliding_y patch_x_size patch_y_size]);
+                    r_channel = patch(:,:,1);mean_r=mean2(r_channel);
+                    if (mean_r>=255*effective_area)
                     patch_temp = imcrop(us,[2+m*sliding_x 2+n*sliding_y patch_x_size patch_y_size]);
-                    mean_patch = mean(patch_temp(:));
-                    if (mean_patch>mean_threshold)
-                    %e_patch = entropy(patch_temp);
-                    %if (e_patch > mean_threshold_tumour)
-                        patch_tumour = patch_temp;
-                        rec = rectangle('Position',[2+m*sliding_x 2+n*sliding_y patch_x_size patch_y_size],'EdgeColor','b','LineWidth',0.5);
-                        patch_tumour=imresize(patch_tumour,[training_size_x training_size_y]);
-                        t_file_name = sprintf('patch_tumour_x%d_y%d_%d.jpg',patch_x_size,patch_y_size,amount_patches_tumour);
-                        t_file_name = strcat(patch_scale,'_',t_file_name);
-                        t_file_name=strcat(ground_truth_name_no_extension,'_',t_file_name);
-                        fullname_t_multi=fullfile(folder_tumour_multiscale,t_file_name);
-                        imwrite(patch_tumour,fullname_t_multi);
-                        amount_patches_tumour=amount_patches_tumour+1;
-                        fprintf('patch tumour %d is processing...',amount_patches_tumour);
-                        fprintf('\n\n');                    
-                    else
-                        %pass
-                    end
-
+                    patch_tumour = patch_temp;
+                    rec = rectangle('Position',[2+m*sliding_x 2+n*sliding_y patch_x_size patch_y_size],'EdgeColor','r','LineWidth',0.5);
+                    patch_tumour=imresize(patch_tumour,[training_size_x training_size_y]);
+                    tumour_file_name = sprintf('patch_tumour_x%d_y%d_%d.png',patch_x_size,patch_y_size,amount_patches_tumour);
+                    tumour_file_name = strcat('case',patient_index,'_',patch_scale,'_',tumour_file_name);
+                    tumour_file_name=strcat(ground_truth_name_no_extension,'_',tumour_file_name);
+                    fullname_tumour_multi=fullfile(folder_tumour_multiscale,tumour_file_name);
+                    imwrite(patch_tumour,fullname_tumour_multi);
+                    amount_patches_tumour=amount_patches_tumour+1;
+                    fprintf('patch tumour %d is processing...',amount_patches_tumour);
+                    fprintf('\n\n');
                     else
                         %pass
                     end
@@ -484,4 +394,64 @@ disp('End')
                 end
             end
             hold off
+            %}
+%%
+% transofrm the ground truth file into hsv file for enhancing colour:
+%{
+hsv_img = rgb2hsv(truth);
+for i = 1:height
+   for j = 1:width
+       hsv_img(i,j,2)=1;
+   end
+end
+% transform the processed hsv back to rgb file:
+processed_truth = hsv2rgb(hsv_img);
+% calculate the mean values for rgb channels:
+R_channel_processed = processed_truth(:,:,1);r=mean2(R_channel_processed);std_r_ground_truth=std2(R_channel_processed);
+G_channel_processed = processed_truth(:,:,2);g=mean2(G_channel_processed);std_g_ground_truth=std2(G_channel_processed);
+B_channel_processed = processed_truth(:,:,3);b=mean2(B_channel_processed);std_b_ground_truth=std2(B_channel_processed);
+%processed_truth_h=ones(height,width,dim);
+processed_truth_whitematter=ones(height,width,dim);
+%processed_truth_sulcus=ones(height,width,dim);
+processed_truth_t=ones(height,width,dim);
+processed_truth_o=ones(height,width,dim);
+processed_truth_h=ones(height,width,dim);
+%}
+%%
+           %{
+            for j=1:width
+                for i =1:height
+                    %green in case1video4 is greymatter
+                    %if (processed_truth(i,j,1)< (r+0.5*std_r_ground_truth) && processed_truth(i,j,2)>(g-1*std_g_ground_truth) && processed_truth(i,j,3)>(b-0*std_b_ground_truth))
+                    %green in case1video1 is healthy
+                    if (processed_truth(i,j,1)< (r+0*std_r_ground_truth) && processed_truth(i,j,2)>(g-0*std_g_ground_truth) && processed_truth(i,j,3)>(b-0.5*std_b_ground_truth))
+                        processed_truth_h(i,j,1)=0;
+                        processed_truth_h(i,j,2)=1;
+                        processed_truth_h(i,j,3)=0;
+                     %{
+                    %brown in case1video4 whitematter
+                    elseif (processed_truth(i,j,1)> (r-0.5*std_r_ground_truth) && processed_truth(i,j,2)< (g+0.3*std_g_ground_truth) && processed_truth(i,j,3)< (b-0*std_b_ground_truth))
+                        processed_truth_h(i,j,1)=0;
+                        processed_truth_h(i,j,2)=1;
+                        processed_truth_h(i,j,3)=0;  
+                        %}
+                    %{    
+                    % yellow in case1video4 is sulcus
+                    elseif (processed_truth(i,j,1)> (r+1*std_r_ground_truth) && processed_truth(i,j,2)>(g+0.5*std_g_ground_truth) && processed_truth(i,j,3)<(b-1*std_b_ground_truth))
+                        processed_truth_h(i,j,1)=0;
+                        processed_truth_h(i,j,2)=1;
+                        processed_truth_h(i,j,3)=0;     
+                     %}
+                    else
+                        processed_truth_h(i,j,1)=0;
+                        processed_truth_h(i,j,2)=0;
+                        processed_truth_h(i,j,3)=0;
+                    end
+                end
+            end
+            %figure
+            %imshow(processed_truth_h)
+            figure 
+            imshow(truth)
+            hold on 
             %}

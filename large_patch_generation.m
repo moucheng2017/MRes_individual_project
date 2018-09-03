@@ -1,3 +1,4 @@
+% each sample is used to generate 4 patches
 clc
 clear all
 %%
