@@ -1,5 +1,7 @@
 function layers = attention_block_new_4(tag,channels,upsamplingRatio)
-% use concatenation to
+% use concatenation
+% when the coarse feature has the different dimensionality with the fine
+% features
 % compatability score version
 layers = [
     transposedConv2dLayer(upsamplingRatio,channels,'Stride',upsamplingRatio,'Name',[tag,'_compatability_mapping'])
