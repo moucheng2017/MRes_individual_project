@@ -18,8 +18,7 @@ inputlayer=imageInputLayer([299 299 3],'Name','inputlayer','Normalization','none
 net = inceptionresnetv2;
 lgraph = layerGraph(net);%figure('Units','normalized','Position',[0.1 0.1 0.8 0.8]);plot(lgraph);
 lgraph=replaceLayer(lgraph,'input_1',inputlayer);
-lgraph = removeLayers(lgraph, {'predictions_softmax','ClassificationLayer_predictions'});
-%lgraph=replaceLayer(lgraph,'fc8',last_layer);
+lgraph = removeLayers(lgraph,{'predictions_softmax','ClassificationLayer_predictions'});% inception resnets
 %% 
 Layers = [
     dropoutLayer(0.6,'Name','dropoutlayer_new1')
@@ -30,12 +29,11 @@ Layers = [
     classificationLayer('Name','classoutput')];
 lgraph = addLayers(lgraph,Layers);
 lgraph = connectLayers(lgraph,'predictions','dropoutlayer_new1');
-%}
-%% freeze layers
 %
+%% freeze layers
 layers = lgraph.Layers;
 connections = lgraph.Connections;
-layers(1:767) = freezeWeights(layers(1:767));%block8_7_ac
+layers(1:768) = freezeWeights(layers(1:768));%block8_7_ac
 lgraph = createLgraphUsingConnections(layers,connections);
 %
 %%
@@ -44,8 +42,8 @@ opts = trainingOptions('adam', ...
     'InitialLearnRate',0.01, ...
     'LearnRateSchedule','piecewise',...
     'LearnRateDropFactor',1e-5,...
-    'LearnRateDropPeriod',120,...
-    'MaxEpochs',150,...
+    'LearnRateDropPeriod',100,...
+    'MaxEpochs',120,...
     'MiniBatchSize',32,...
     'Verbose',true,...
     'GradientDecayFactor',0.9,...
@@ -56,19 +54,19 @@ opts = trainingOptions('adam', ...
     'ValidationPatience',Inf,...
     'ExecutionEnvironment','gpu',...
     'Plots','training-progress');
-[inceptionv2resnetUS,info] = trainNetwork(augimdsTrain, lgraph, opts);
-model_name='inceptionv2resnet_train_case2case3_40to80Patches_60%training_150epoches_767LayersFrozen.mat';
-model_folder= '../trained models/20180828';
+model_folder= '../trained models/20180831';
+%%
+[net,info] = trainNetwork(augimdsTrain,lgraph, opts);
+model_name='inceptionresnet_768layersfrozen_1.mat';
 model=fullfile(model_folder,model_name);
-save (model,'inceptionv2resnetUS','info')
-%% vgg16
-%{
-inputlayer=imageInputLayer([224 224 3],'Name','inputlayer','Normalization','none');
-net = vgg16;
-lgraph = layerGraph(net);%figure('Units','normalized','Position',[0.1 0.1 0.8 0.8]);plot(lgraph);
-lgraph=replaceLayer(lgraph,'input',inputlayer);
-last_layer=fullyConnectedLayer(2,'Name','fc_2neurons');
-lgraph=replaceLayer(lgraph,'fc8',last_layer);
-%}
-
-
+save (model,'net','info')
+%
+[net,info] = trainNetwork(augimdsTrain,lgraph, opts);
+model_name='inceptionresnet_768layersfrozen_2.mat';
+model=fullfile(model_folder,model_name);
+save (model,'net','info')
+%
+[net,info] = trainNetwork(augimdsTrain,lgraph, opts);
+model_name='inceptionresnet_768layersfrozen_3.mat';
+model=fullfile(model_folder,model_name);
+save (model,'net','info')

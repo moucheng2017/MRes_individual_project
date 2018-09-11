@@ -61,13 +61,13 @@ p2=plot(smooth(average2,0.001),'LineWidth',1.5,'Color','b');
 % p5=plot(smooth(validation5_accuracy,0.001),'LineWidth',1.5,'Color','m');
 % p6=plot(smooth(validation6_accuracy,0.001),'LineWidth',1.5,'Color','k');
 hold off
-ylim([70 90]);
+ylim([88 94]);
 xlim([5000 6500]);
-leg=legend([p1 p2],{'FCN-8s','SegNet'});
+leg=legend([p1 p2],{'FCN-8s','res-U-net 4 vector-concatenation attention'});
 leg.Location = 'south';
 set(leg,'units','normalized');
 %set(leg,'position','best');
-figurename='FCN and SegNet';
+figurename='element-addition attention and vector-concatenation attention';
 xlabel('Training iterations');
 ylabel('Validation accuracy');
 title(figurename);

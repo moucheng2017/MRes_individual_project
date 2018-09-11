@@ -1,6 +1,7 @@
 function [lgraph,networkname]=resnet8_Unet_v1_4_full_decoder_attention(classes,netWidth,height,width,beta)
-% skip connnections in both encoder and decoder
-% attention in decoder
+% mixed
+% 
+% attention in decoder as well
 % compatability score used
 lgraph=resnet8_Unet(classes,netWidth,height,width,beta);
 networkname='resnet8_Unet_v1_4_full_decoder_attention';

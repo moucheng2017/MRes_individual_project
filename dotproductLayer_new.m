@@ -87,19 +87,22 @@ classdef dotproductLayer_new < nnet.layer.Layer
             if (length(size_x)==3)
                 X_1 = X(:,:,1:half_channels);
                 X_2 = X(:,:,half_channels+1:channels);
-                X_new=cat(3,X_2,X_1);
-                dZ_new=repmat(dZ,[1 1 2]);
-                dX =X_new.*dZ_new;
+                dX_1=X_2.*dZ;
+                dX_2=mean(X_1,3).*dZ;
+                dX=cat(3,dX_1,dX_2);
             else
                 minibatch_size=size_x(4);
                 X_new=reshape(X,height,width,minibatch_size*channels);
                 half_channels_minibatch=0.5*minibatch_size*channels;
                 X_1 = X_new(:,:,1:half_channels_minibatch);
                 X_2 = X_new(:,:,half_channels_minibatch+1:minibatch_size*channels);
-                X_new=cat(3,X_2,X_1);
-                X_new=reshape(X_new,height,width,channels,minibatch_size);
-                dZ_new=repmat(dZ,[1 1 2]);
-                dX =X_new.*dZ_new;
+                dZ=reshape(dZ,height,width,0.5*minibatch_size*channels);
+                dX_1=X_2.*dZ;
+                dX_2=mean(X_1,3).*dZ; 
+                dX=cat(3,dX_1,dX_2);
+                dX=reshape(dX,height,width ,channels,minibatch_size);
+                %dZ_new=repmat(dZ,[1 1 2]);
+                %dX =X_new.*dZ_new./channels;
             end
 
             

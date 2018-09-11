@@ -1,7 +1,8 @@
-function [lgraph,networkname]=attention_Unet_5stages_new_new(height,width,netwidth)
+function [lgraph,networkname]=attention_Unet_5stages_literature(height,width,netwidth)
 % added compatibility mapping of local features
-networkname='attention_network_5stages_new_new';
-% U net with attentions
+% concatenation
+networkname='attention_network_5stages_literature';
+% U net with attention
 lgraph = createUnet(5,height,width,netwidth);
 larray=imageInputLayer([height width 3],'Name','Input','Normalization','None');
 lgraph=replaceLayer(lgraph,'ImageInputLayer',larray);

@@ -1,5 +1,7 @@
-function layers = attention_block_spatial_1(tag,channels)
+function layers = attention_block_mixed_1(tag,channels)
 % use concatenation
+% when the coarse feature has the same dimensionality with the fine
+% features
 % compatability score version
 layers = [
     %convolution2dLayer(1,channels,'Stride',1,'Padding','same','Name',[tag,'_compatability_mapping'])
@@ -9,8 +11,7 @@ layers = [
     batchNormalizationLayer('Name',[tag,'_attention_BN'])
     convolution2dLayer(1,channels,'Stride',1,'Padding','same','Name',[tag,'_compatability_mapping_phi'])
     softmaxLayer('Name',[tag,'_attention_softmax'])
-    %normalisation_layer([tag,'_attention_normalisation'])
     depthConcatenationLayer(2,'Name',[tag,'_attention_transition'])
-    dotproductLayer_new([tag,'_attention_dotproduct'])
+    dotproductLayer([tag,'_attention_dotproduct'])
     ];
 end

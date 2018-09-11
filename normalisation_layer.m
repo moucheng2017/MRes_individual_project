@@ -29,12 +29,14 @@ classdef normalisation_layer < nnet.layer.Layer
             mean_value=mean2(X);
             Z= X-mean_value;
             Z = Z./Z;
+            %{
             size_x=size(X);
             if (length(size_x)==3)
             Z = mean(Z,3);
             else
             Z = mean(Z,4);  
             end
+            %}
         end
 
         function [dX] = backward(~,X,Z, ~  , ~ )

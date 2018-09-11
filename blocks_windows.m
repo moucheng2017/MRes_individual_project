@@ -6,14 +6,14 @@ clear all
 %model_folder= '../trained models/11062018';
 %model_folder= '../trained models/18062018';
 %model_folder= '../trained models/11062018';
-model_folder= '../trained models/20180828';
+model_folder= 'C:\Users\NeuroBeast\Desktop\comparison\sliding window';
 addpath(model_folder);
 %% change parameters:
 % choose fine tuned neural model:
-model_name = 'Googlenet_train_case2case3_40to80Patches_60%training_125epoches_125layersFrozen.mat';
+model_name = 'googlenet_111layersfrozen_2.mat';
 model_file=fullfile(model_folder,model_name);
 load (model_file);
-neural_net = googlenetUS;
+neural_net = net;
 % change the fine tuned neural model name:
 [path,model_info,ext]=fileparts(model_name);
 %net_infor = strcat(net_type,'_',classes,'classes','_trained on',training_dataset,'_',training_patches_size,'_with_',training_patches_sliding,'sliding');
@@ -22,7 +22,7 @@ size_range_low=40;
 size_range_low_str=num2str(size_range_low);
 size_range_high=80;
 size_range_high_str=num2str(size_range_high);
-size_intermidiate=1;
+size_intermidiate=10;
 %test_imgs_path = uigetdir;
 test_imgs_path='C:\Users\NeuroBeast\Desktop\us + masks\case6\US';
 test_files = dir(fullfile(test_imgs_path,'*.png'));
@@ -37,7 +37,7 @@ classified={};
 % testing US images indexes:
 classiy_fun = @(block) classify_US(block,neural_net);%3 classes
 %classiy_fun = @(block) classify_US_5classes(block,neural_net); % 5 classes
-result_storing_path='C:\Users\NeuroBeast\Desktop\results 20180829';
+result_storing_path='C:\Users\NeuroBeast\Desktop\results';
 for i=1:length(test_files)
     test_name_read=test_files{i};
     [filepath,test_name_write,ext]=fileparts(test_name_read);
@@ -83,7 +83,7 @@ for i=1:length(test_files)
         end
     end
     % change here:
-    result_average_name=strcat('labels_',test_name_write,'_',model_info,'_average_between_',size_range_low_str,'_',size_range_high_str,'.png');  
+    result_average_name=strcat('labels_',test_name_write,'_',model_info,'.png');  
     store_file_average_sum=fullfile(result_storing_path,result_average_name); 
     imwrite(result_average,store_file_average_sum);
     %figure

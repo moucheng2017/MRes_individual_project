@@ -1,5 +1,8 @@
 function [lgraph,networkname]=resnet8_Unet_v2_attention_v1_4_new_new(classes,netWidth,height,width,beta)
 % skip connnections in both encoder and decoder
+% concatenation
+% mixed
+% after relu
 % compatability score used
 lgraph=resnet8_Unet_v2(classes,netWidth,height,width,beta);
 networkname='resnet8_Unet_v2_attention_v1_4_new_new';
