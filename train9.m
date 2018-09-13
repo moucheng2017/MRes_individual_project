@@ -15,51 +15,32 @@ totalNumberOfPixels = sum(tbl.PixelCount);
 frequency = tbl.PixelCount / totalNumberOfPixels;
 inverseFrequency = 1./frequency;
 last_layer = pixelClassificationLayer('ClassNames',tbl.Name,'ClassWeights',inverseFrequency,'Name','classification');
+beta=1;beta_str=num2str(beta);
+fb_loss_layer=Fb_loss_v3('fb classification',beta);
 %%
 netwidth=48;
 netwidthstr=num2str(netwidth);
 %% model 1
-lgraph = createUnet(3,448,448,netwidth);
-lgraph=replaceLayer(lgraph,'Segmentation-Layer',last_layer);
-networkname='3 U-net';
+[lgraph,networkname]=attention_Unet_5stages_v1_4_new_new(448,448,netwidth);
+lgraph=replaceLayer(lgraph,'Segmentation-Layer',fb_loss_layer);
 [net1,infor]= trainNetwork(train,lgraph,options);
-notes=strcat('_netwidth',netwidthstr);
-modelname=strcat(networkname,notes,'_weighted_crossentropy_2.mat');
+%notes=strcat('_netwidth',netwidthstr);
+modelname=strcat(networkname,'_fb_1_1.mat');
 model=fullfile(model_folder_saved,modelname);
 save (model,'net1','infor');
 %% model 2
-lgraph = createUnet(4,448,448,netwidth);
-lgraph=replaceLayer(lgraph,'Segmentation-Layer',last_layer);
-networkname='4 U-net';
+[lgraph,networkname]=attention_Unet_5stages_v1_4_new_new(448,448,netwidth);
+lgraph=replaceLayer(lgraph,'Segmentation-Layer',fb_loss_layer);
 [net1,infor]= trainNetwork(train,lgraph,options);
-notes=strcat('_netwidth',netwidthstr);
-modelname=strcat(networkname,notes,'_weighted_crossentropy_1.mat');
+%notes=strcat('_netwidth',netwidthstr);
+modelname=strcat(networkname,'_fb_1_2.mat');
 model=fullfile(model_folder_saved,modelname);
 save (model,'net1','infor');
 %% model 3
-lgraph = createUnet(4,448,448,netwidth);
-lgraph=replaceLayer(lgraph,'Segmentation-Layer',last_layer);
-networkname='4 U-net';
+[lgraph,networkname]=attention_Unet_5stages_v1_4_new_new(448,448,netwidth);
+lgraph=replaceLayer(lgraph,'Segmentation-Layer',fb_loss_layer);
 [net1,infor]= trainNetwork(train,lgraph,options);
-notes=strcat('_netwidth',netwidthstr);
-modelname=strcat(networkname,notes,'_weighted_crossentropy_2.mat');
-model=fullfile(model_folder_saved,modelname);
-save (model,'net1','infor');
-%% model 4
-lgraph = createUnet(5,448,448,netwidth);
-lgraph=replaceLayer(lgraph,'Segmentation-Layer',last_layer);
-networkname='5 U-net';
-[net1,infor]= trainNetwork(train,lgraph,options);
-notes=strcat('_netwidth',netwidthstr);
-modelname=strcat(networkname,notes,'_weighted_crossentropy_1.mat');
-model=fullfile(model_folder_saved,modelname);
-save (model,'net1','infor');
-%% model 5
-lgraph = createUnet(3,448,448,netwidth);
-lgraph=replaceLayer(lgraph,'Segmentation-Layer',last_layer);
-networkname='3 U-net';
-[net1,infor]= trainNetwork(train,lgraph,options);
-notes=strcat('_netwidth',netwidthstr);
-modelname=strcat(networkname,notes,'_weighted_crossentropy_1.mat');
+%notes=strcat('_netwidth',netwidthstr);
+modelname=strcat(networkname,'_fb_1_3.mat');
 model=fullfile(model_folder_saved,modelname);
 save (model,'net1','infor');

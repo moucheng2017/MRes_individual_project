@@ -47,3 +47,4 @@ MeanBFScore=MeanBFScore';
 T = table(modelnames,GlobalAccuracy,MeanAccuracy,MeanIoU,WeightedIoU,MeanBFScore);
 tablefullname=fullfile(folder,'semantic_segmentation_results.xls');
 writetable(T,tablefullname);
+disp('End')
