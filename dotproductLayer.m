@@ -1,15 +1,5 @@
 classdef dotproductLayer < nnet.layer.Layer
-    
-    properties
-        % (Optional) Layer properties
-        %dims
-        %CoarseFeatures
-        %Alpha
-        %height
-        %width
-        %submatrices
-        % Layer properties go here
-    end
+% This is for mixed attention.    
 
     methods
         function layer = dotproductLayer(name)
