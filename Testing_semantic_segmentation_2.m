@@ -2,11 +2,11 @@ clc
 clear all
 % create stitched segmented images
 % load net
-model_folder= '../trained models/20180828';
+model_folder= 'C:\Users\NeuroBeast\Desktop\MRes_Moucheng\comparison\skip connection in encoder\our connection methods';
 addpath(model_folder);
-model_name_mat = 'attention_network_5stages_new_train_case2+case3 large train original_validate_case2+case3 large test original_fb loss fb=1_epoches300_learnrate0.1_netwidth48.mat';
+model_name_mat = 'attention_network_5stages_v1_4_new_new_fb_1_3.mat';
 [f_model,model_name,ext_model]=fileparts(model_name_mat);
-mkdir('C:\Users\NeuroBeast\Desktop\results 20180903',model_name);
+mkdir('C:\Users\NeuroBeast\Desktop\results',model_name);
 model_file=fullfile(model_folder,model_name_mat);
 network=load (model_file);
 net=network.net1;
@@ -14,11 +14,11 @@ net=network.net1;
 %classificationlayer='classification';
 classificationlayer='fb classification';
 % test images:
-test_folder='case4';
-test_folder=strcat('C:\Users\NeuroBeast\Desktop\us + masks\',test_folder,'\US');
+test_folder='case1video4';
+test_folder=strcat('C:\Users\NeuroBeast\Desktop\Full_attentional_FCN\us + masks\',test_folder,'\US');
 %test_folder='C:\Users\NeuroBeast\Desktop\nerves test\patches';
 addpath(test_folder);
-all_imgs = dir(fullfile(test_folder,'\*.png'));
+all_imgs = dir(fullfile(test_folder,'\*.jpg'));
 all_imgs = {all_imgs.name}';
 all_files=all_imgs;
 %%
@@ -53,7 +53,7 @@ for i =1:length(all_files)
     %
     %figure
     %imshow(test)
-    saving_folder=strcat('C:\Users\NeuroBeast\Desktop\results 20180903\',model_name);
+    saving_folder=strcat('C:\Users\NeuroBeast\Desktop\results\',model_name);
     saving_file_name=strcat('mask_',test_name,'.png');
     name=fullfile(saving_folder,saving_file_name);
     %name = strcat('C:\Users\NeuroBeast\Desktop\results 20180822\',test_name,'_',model_name,'.png');

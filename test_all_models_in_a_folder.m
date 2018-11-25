@@ -2,10 +2,10 @@ clc
 clear all
 % change here:
 % model folder:
-model_folder= 'C:\Users\NeuroBeast\Desktop\comparison\skip connection in encoder\literature connection method';addpath(model_folder);
+model_folder= 'C:\Users\NeuroBeast\Desktop\Full_attentional_FCN\Models';addpath(model_folder);
 % test images:
 test_folder='case6';
-test_folder=strcat('C:\Users\NeuroBeast\Desktop\us + masks\',test_folder,'\US');
+test_folder=strcat('C:\Users\NeuroBeast\Desktop\Full_attentional_FCN\us + masks\',test_folder,'\US');
 addpath(test_folder);
 %
 all_imgs = dir(fullfile(test_folder,'\*.png'));

@@ -1,6 +1,6 @@
 %% data analysis
 % ground truth images:
-truth_folder = 'C:\Users\NeuroBeast\Desktop\us + masks\case6\labels';
+truth_folder = 'C:\Users\NeuroBeast\Desktop\Full_attentional_FCN\us + masks\case6\labels';
 truth_files = dir(fullfile(truth_folder,'*.tif')); 
 truth_files = {truth_files.name};
 classNames = ["tumour" "background"];
